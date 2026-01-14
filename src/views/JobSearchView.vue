@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { API_BASE_URL } from '@/config'
 import { useApplicationStore } from '@/stores/applications'
 import Button from '@/components/ui/Button.vue'
 import Input from '@/components/ui/Input.vue'
@@ -35,7 +36,7 @@ async function handleSearch() {
   results.value = []
 
   try {
-    const response = await fetch('http://localhost:3000/api/scrape', {
+    const response = await fetch(`${API_BASE_URL}/api/scrape`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

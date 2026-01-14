@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { API_BASE_URL } from '@/config'
 // Remove useStorage as we now sync with DB
 
 export const useApplicationStore = defineStore('applications', () => {
@@ -29,7 +30,7 @@ export const useApplicationStore = defineStore('applications', () => {
 
         isLoading.value = true
         try {
-            const response = await fetch('http://localhost:3000/api/applications', {
+            const response = await fetch(`${API_BASE_URL}/api/applications`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             })
             if (response.ok) {
@@ -47,7 +48,7 @@ export const useApplicationStore = defineStore('applications', () => {
         if (!token) return;
 
         try {
-            const response = await fetch('http://localhost:3000/api/applications', {
+            const response = await fetch(`${API_BASE_URL}/api/applications`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -81,7 +82,7 @@ export const useApplicationStore = defineStore('applications', () => {
         }
 
         try {
-            const response = await fetch(`http://localhost:3000/api/applications/${id}`, {
+            const response = await fetch(`${API_BASE_URL}/api/applications/${id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -110,7 +111,7 @@ export const useApplicationStore = defineStore('applications', () => {
         applications.value = applications.value.filter(a => a.id !== id)
 
         try {
-            const response = await fetch(`http://localhost:3000/api/applications/${id}`, {
+            const response = await fetch(`${API_BASE_URL}/api/applications/${id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             })

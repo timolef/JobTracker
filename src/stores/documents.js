@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { API_BASE_URL } from '@/config'
 
 export const useDocumentsStore = defineStore('documents', () => {
     const documents = ref([])
@@ -14,7 +15,7 @@ export const useDocumentsStore = defineStore('documents', () => {
 
         isLoading.value = true
         try {
-            const response = await fetch('http://localhost:3000/api/documents', {
+            const response = await fetch(`${API_BASE_URL}/api/documents`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             })
             if (response.ok) {
@@ -36,7 +37,7 @@ export const useDocumentsStore = defineStore('documents', () => {
         formData.append('type', type)
 
         try {
-            const response = await fetch('http://localhost:3000/api/documents/upload', {
+            const response = await fetch(`${API_BASE_URL}/api/documents/upload`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` },
                 body: formData
@@ -58,7 +59,7 @@ export const useDocumentsStore = defineStore('documents', () => {
         if (!token) return;
 
         try {
-            const response = await fetch('http://localhost:3000/api/documents/create', {
+            const response = await fetch(`${API_BASE_URL}/api/documents/create`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -83,7 +84,7 @@ export const useDocumentsStore = defineStore('documents', () => {
         if (!token) return;
 
         try {
-            const response = await fetch(`http://localhost:3000/api/documents/${id}`, {
+            const response = await fetch(`${API_BASE_URL}/api/documents/${id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             })
@@ -101,7 +102,8 @@ export const useDocumentsStore = defineStore('documents', () => {
         if (!token) return;
 
         // Create a temporary link to download
-        fetch(`http://localhost:3000/api/documents/${id}/download`, {
+        // Create a temporary link to download
+        fetch(`${API_BASE_URL}/api/documents/${id}/download`, {
             headers: { 'Authorization': `Bearer ${token}` }
         })
             .then(response => response.blob())
@@ -121,7 +123,7 @@ export const useDocumentsStore = defineStore('documents', () => {
         const token = getToken()
         if (!token) return;
 
-        fetch(`http://localhost:3000/api/documents/${id}/view`, {
+        fetch(`${API_BASE_URL}/api/documents/${id}/view`, {
             headers: { 'Authorization': `Bearer ${token}` }
         })
             .then(response => response.blob())
@@ -137,7 +139,7 @@ export const useDocumentsStore = defineStore('documents', () => {
         if (!token) return;
 
         try {
-            const response = await fetch(`http://localhost:3000/api/documents/${id}`, {
+            const response = await fetch(`${API_BASE_URL}/api/documents/${id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
