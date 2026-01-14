@@ -5,7 +5,7 @@ const { initDB } = require('./db');
 const authRoutes = require('./auth');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // Initialize Database
 initDB();
