@@ -1,0 +1,73 @@
+<script setup>
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+import Button from '@/components/ui/Button.vue'
+import Input from '@/components/ui/Input.vue'
+import Label from '@/components/ui/Label.vue'
+import Card from '@/components/ui/Card.vue'
+import CardHeader from '@/components/ui/CardHeader.vue'
+import CardTitle from '@/components/ui/CardTitle.vue'
+import CardDescription from '@/components/ui/CardDescription.vue'
+import CardContent from '@/components/ui/CardContent.vue'
+import CardFooter from '@/components/ui/CardFooter.vue'
+import { LogIn } from 'lucide-vue-next'
+
+const router = useRouter()
+const auth = useAuthStore()
+
+const email = ref('')
+const password = ref('')
+const isLoading = ref(false)
+
+async function handleLogin() {
+  isLoading.value = true
+  
+  try {
+    await auth.login(email.value, password.value)
+    router.push('/dashboard')
+  } catch (error) {
+    alert(error.message)
+  } finally {
+    isLoading.value = false
+  }
+}
+</script>
+
+<template>
+  <div class="min-h-screen flex items-center justify-center bg-muted/50 p-4">
+    <Card class="w-full max-w-md shadow-lg border-opacity-50">
+      <CardHeader class="space-y-1">
+        <CardTitle class="text-2xl font-bold tracking-tight text-center">Welcome back</CardTitle>
+        <CardDescription class="text-center">
+          Enter your email to sign in to your account
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form @submit.prevent="handleLogin" class="space-y-4">
+          <div class="space-y-2">
+            <Label for="email">Email</Label>
+            <Input id="email" type="email" placeholder="m@example.com" v-model="email" required />
+          </div>
+          <div class="space-y-2">
+            <Label for="password">Password</Label>
+            <Input id="password" type="password" v-model="password" required />
+          </div>
+          <Button type="submit" class="w-full" :disabled="isLoading">
+            <LogIn v-if="!isLoading" class="mr-2 h-4 w-4" />
+            <span v-else class="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+            {{ isLoading ? 'Signing in...' : 'Sign In' }}
+          </Button>
+        </form>
+      </CardContent>
+      <CardFooter class="flex justify-center">
+        <p class="text-xs text-muted-foreground">
+          Don't have an account? 
+          <router-link to="/register" class="underline underline-offset-4 hover:text-primary">
+            Sign up
+          </router-link>
+        </p>
+      </CardFooter>
+    </Card>
+  </div>
+</template>
