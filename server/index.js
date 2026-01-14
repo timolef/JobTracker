@@ -10,12 +10,26 @@ const PORT = process.env.PORT || 3000;
 // Initialize Database
 initDB();
 
-app.use(cors({
-    origin: ['https://job-tracker-ten-sooty.vercel.app', 'http://localhost:5173', 'http://localhost:4173'],
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-}));
+// Manual CORS Middleware to fix persistent issues
+app.use((req, res, next) => {
+    const allowedOrigins = ['https://job-tracker-ten-sooty.vercel.app', 'http://localhost:5173', 'http://localhost:4173', 'https://jobtracker-production-03e6.up.railway.app'];
+    const origin = req.headers.origin;
+
+    if (allowedOrigins.includes(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+    }
+
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+
+    // Handle preflight immediately
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+
+    next();
+});
 app.use(express.json());
 
 // Request logger

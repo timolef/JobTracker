@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://jobtracker-production-03e6.up.railway.app';
 
 console.log('API_BASE_URL:', API_BASE_URL); // Debugging
 
