@@ -10,7 +10,12 @@ const PORT = process.env.PORT || 3000;
 // Initialize Database
 initDB();
 
-app.use(cors());
+app.use(cors({
+    origin: ['https://job-tracker-ten-sooty.vercel.app', 'http://localhost:5173', 'http://localhost:4173'],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 
 // Request logger
