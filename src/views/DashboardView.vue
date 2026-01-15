@@ -66,22 +66,24 @@ function formatDate(isoString) {
 
 <template>
   <div class="space-y-8">
-    <div class="flex items-center justify-between">
+    <div class="flex items-center justify-between mb-8">
       <div>
-        <h2 class="text-3xl font-bold tracking-tight">Dashboard</h2>
-        <p class="text-muted-foreground">Overview of your job search progress.</p>
+        <h2 class="text-3xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">Dashboard</h2>
+        <p class="text-muted-foreground mt-1">Welcome back! Here's an overview of your progress.</p>
       </div>
     </div>
 
     <!-- Stats Grid -->
-    <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      <Card v-for="stat in stats" :key="stat.title">
-        <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle class="text-sm font-medium">{{ stat.title }}</CardTitle>
-          <component :is="stat.icon" :class="stat.class" class="h-4 w-4" />
-        </CardHeader>
-        <CardContent>
-          <div class="text-2xl font-bold">{{ stat.value() }}</div>
+    <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <Card v-for="stat in stats" :key="stat.title" class="glass hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 border-none">
+        <CardContent class="p-6">
+          <div class="flex items-center justify-between space-y-0 pb-2">
+            <p class="text-sm font-medium text-muted-foreground">{{ stat.title }}</p>
+            <component :is="stat.icon" class="h-4 w-4 text-primary opacity-70" />
+          </div>
+          <div class="flex items-baseline gap-2">
+            <div class="text-3xl font-bold">{{ stat.value() }}</div>
+          </div>
         </CardContent>
       </Card>
     </div>

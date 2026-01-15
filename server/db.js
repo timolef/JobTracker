@@ -61,6 +61,41 @@ async function initDB() {
       )
     `);
 
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS contacts (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        company VARCHAR(255),
+        role VARCHAR(255),
+        email VARCHAR(255),
+        phone VARCHAR(50),
+        linkedin_url VARCHAR(255),
+        notes TEXT,
+        last_contact_date TIMESTAMP NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS interviews (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        application_id INT,
+        company VARCHAR(255) NOT NULL,
+        position VARCHAR(255) NOT NULL,
+        interview_date DATETIME NOT NULL,
+        type ENUM('Phone', 'Video', 'On-site', 'Technical') DEFAULT 'Video',
+        questions TEXT,
+        research TEXT,
+        notes TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (application_id) REFERENCES applications(id) ON DELETE SET NULL
+      )
+    `);
+
     connection.release();
     console.log('Database initialized (Users, Applications, Documents tables ready).');
   } catch (err) {

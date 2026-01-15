@@ -27,6 +27,7 @@ const router = createRouter({
                     name: 'dashboard',
                     component: () => import('../views/DashboardView.vue')
                 },
+
                 {
                     path: 'applications',
                     name: 'applications',
@@ -46,6 +47,16 @@ const router = createRouter({
                     path: 'kanban',
                     name: 'kanban',
                     component: () => import('../views/KanbanView.vue')
+                },
+                {
+                    path: 'contacts',
+                    name: 'contacts',
+                    component: () => import('../views/ContactsView.vue')
+                },
+                {
+                    path: 'interviews',
+                    name: 'interviews',
+                    component: () => import('../views/InterviewsView.vue')
                 }
             ]
         }

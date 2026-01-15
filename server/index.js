@@ -43,6 +43,8 @@ app.use((req, res, next) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/applications', require('./applications'));
 app.use('/api/documents', require('./documents'));
+app.use('/api/contacts', require('./contacts'));
+app.use('/api/interviews', require('./interviews'));
 
 
 app.post('/api/scrape', async (req, res) => {
