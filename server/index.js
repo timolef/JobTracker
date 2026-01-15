@@ -14,6 +14,7 @@ initDB();
 app.use((req, res, next) => {
     const allowedOrigins = ['https://job-tracker-ten-sooty.vercel.app', 'http://localhost:5173', 'http://localhost:4173', 'https://jobtracker-production-03e6.up.railway.app'];
     const origin = req.headers.origin;
+    console.log(`[CORS] Request Origin: ${origin}, Allowed: ${allowedOrigins.includes(origin)}`);
 
     if (allowedOrigins.includes(origin)) {
         res.setHeader('Access-Control-Allow-Origin', origin);

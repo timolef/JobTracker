@@ -63,10 +63,9 @@ async function initDB() {
     connection.release();
     console.log('Database initialized (Users, Applications, Documents tables ready).');
   } catch (err) {
-    console.error('Database initialization failed:', err.message);
-    if (err.code === 'ER_BAD_DB_ERROR') {
-      console.error('Make sure the database "job_tracker" exists. Run "CREATE DATABASE job_tracker;" in MySQL.');
-    }
+    console.error('FATAL: Database initialization failed:', err);
+    // On Railway, we want to crash if DB fails so we see it in logs
+    process.exit(1);
   }
 }
 
