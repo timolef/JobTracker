@@ -18,6 +18,7 @@ const auth = useAuthStore()
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Board', href: '/kanban', icon: Briefcase },
   { name: 'Applications', href: '/applications', icon: Briefcase },
   { name: 'Documents', href: '/documents', icon: FileText },
   { name: 'Find Jobs', href: '/search', icon: Search },
