@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useDocumentsStore } from '@/stores/documents'
-import { FileText, File, Plus, Download, Trash2, Upload, PenTool, Eye } from 'lucide-vue-next'
+import { FileText, File, Plus, Download, Trash2, Upload, PenTool, Eye, Sparkles, Loader2 } from 'lucide-vue-next'
 import Button from '@/components/ui/Button.vue'
 import Dialog from '@/components/ui/Dialog.vue'
 import Input from '@/components/ui/Input.vue'
@@ -12,6 +12,8 @@ import CardContent from '@/components/ui/CardContent.vue'
 const docStore = useDocumentsStore()
 const isUploadOpen = ref(false)
 const isEditorOpen = ref(false)
+const isAIModalOpen = ref(false)
+const isGenerating = ref(false)
 
 const fileInput = ref(null)
 const selectedFile = ref(null)
@@ -19,6 +21,12 @@ const selectedFile = ref(null)
 const letterForm = ref({
     name: '',
     content: ''
+})
+
+const aiForm = ref({
+    jobTitle: '',
+    company: '',
+    jobDescription: ''
 })
 
 onMounted(() => {
@@ -42,6 +50,24 @@ async function handleSaveLetter() {
     await docStore.createCoverLetter(letterForm.value.name, letterForm.value.content)
     isEditorOpen.value = false
     letterForm.value = { name: '', content: '' }
+}
+
+// AI Generation Logic
+async function handleGenerateAI() {
+    isGenerating.value = true
+    try {
+        const content = await docStore.generateAI(aiForm.value)
+        letterForm.value = {
+            name: `AI - LM ${aiForm.value.company || aiForm.value.jobTitle}`,
+            content: content
+        }
+        isAIModalOpen.value = false
+        isEditorOpen.value = true // Open editor with generated content
+    } catch (err) {
+        alert("Erreur lors de la génération. Vérifiez votre clé API OpenAI.")
+    } finally {
+        isGenerating.value = false
+    }
 }
 
 const isRenameOpen = ref(false)
@@ -75,6 +101,9 @@ function formatDate(isoString) {
         <p class="text-muted-foreground">Manage your CVs and Cover Letters.</p>
       </div>
       <div class="flex gap-2">
+         <Button variant="outline" class="border-primary/50 text-primary hover:bg-primary/10" @click="isAIModalOpen = true">
+            <Sparkles class="mr-2 h-4 w-4" /> AI Generator
+         </Button>
          <Button variant="outline" @click="isEditorOpen = true">
             <PenTool class="mr-2 h-4 w-4" /> Write Letter
          </Button>
@@ -157,6 +186,38 @@ function formatDate(isoString) {
             </div>
         </div>
     </Dialog>
+    <!-- AI Generator Dialog -->
+    <Dialog v-model:open="isAIModalOpen" title="AI Cover Letter Generator">
+        <div class="space-y-4 mt-4 w-full">
+            <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-2">
+                    <Label>Job Title</Label>
+                    <Input v-model="aiForm.jobTitle" placeholder="e.g. Frontend Developer" />
+                </div>
+                <div class="space-y-2">
+                    <Label>Company</Label>
+                    <Input v-model="aiForm.company" placeholder="e.g. Google" />
+                </div>
+            </div>
+            <div class="space-y-2">
+                <Label>Job Description (Paste here)</Label>
+                <textarea 
+                    v-model="aiForm.jobDescription" 
+                    class="flex min-h-[150px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    placeholder="Paste the requirements and description..."
+                ></textarea>
+            </div>
+            <div class="flex justify-end gap-2">
+                <Button variant="ghost" @click="isAIModalOpen = false">Cancel</Button>
+                <Button :disabled="!aiForm.jobDescription || isGenerating" @click="handleGenerateAI">
+                    <Loader2 v-if="isGenerating" class="mr-2 h-4 w-4 animate-spin" />
+                    <Sparkles v-else class="mr-2 h-4 w-4" />
+                    {{ isGenerating ? 'Generating...' : 'Magic Generate' }}
+                </Button>
+            </div>
+        </div>
+    </Dialog>
+
     <!-- Rename Dialog -->
     <Dialog v-model:open="isRenameOpen" title="Rename Document">
         <div class="space-y-4 mt-4 w-full">

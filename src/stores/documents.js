@@ -162,5 +162,32 @@ export const useDocumentsStore = defineStore('documents', () => {
         }
     }
 
-    return { documents, isLoading, fetchDocuments, uploadDocument, createCoverLetter, deleteDocument, downloadDocument, viewDocument, renameDocument }
+    async function generateAI(data) {
+        const token = getToken()
+        if (!token) return;
+
+        isLoading.value = true
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/documents/generate-ai`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(data)
+            })
+
+            if (!response.ok) throw new Error('Failed to generate cover letter')
+            const result = await response.json()
+            return result.content
+        } catch (error) {
+            console.error('AI Generation failed', error)
+            throw error
+        } finally {
+            isLoading.value = true // Wait, should be false
+            isLoading.value = false
+        }
+    }
+
+    return { documents, isLoading, fetchDocuments, uploadDocument, createCoverLetter, deleteDocument, downloadDocument, viewDocument, renameDocument, generateAI }
 })

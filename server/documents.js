@@ -2,9 +2,19 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { pool } = require('./db');
 const { authenticateToken } = require('./middleware');
 const router = express.Router();
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
+
+if (!process.env.GEMINI_API_KEY) {
+    console.error("[GEMINI] ERROR: GEMINI_API_KEY is missing from environment variables!");
+} else {
+    console.log("[GEMINI] SDK initialized (Key found)");
+}
 
 // Configure Multer
 const storage = multer.diskStorage({
@@ -74,6 +84,46 @@ router.post('/create', authenticateToken, async (req, res) => {
     } catch (error) {
         console.error('Create doc error:', error);
         res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// POST Generate AI Cover Letter
+router.post('/generate-ai', authenticateToken, async (req, res) => {
+    const { jobTitle, company, jobDescription } = req.body;
+
+    if (!jobDescription) {
+        return res.status(400).json({ error: 'Job description is required' });
+    }
+
+    try {
+        // 1. Fetch user's latest CV if available for context
+        const [docs] = await pool.query(
+            'SELECT content FROM documents WHERE user_id = ? AND type = "CV" ORDER BY created_at DESC LIMIT 1',
+            [req.user.id]
+        );
+        const cvContext = docs.length > 0 ? docs[0].content : "No CV provided.";
+
+        // 2. Call Gemini
+        const prompt = `Tu es un expert en recrutement et en rédaction de lettres de motivation en français. 
+        Ton but est de rédiger une lettre percutante, professionnelle et personnalisée.
+
+        Rédige une lettre de motivation pour le poste de "${jobTitle}" chez "${company}". 
+        
+        Description du poste :
+        ${jobDescription}
+
+        Mon profil (extrait du CV) :
+        ${cvContext}
+
+        La lettre doit être formelle et mettre en avant mes compétences par rapport aux besoins du poste.`;
+
+        const result = await model.generateContent(prompt);
+        const generatedText = result.response.text();
+
+        res.json({ content: generatedText });
+    } catch (error) {
+        console.error('Gemini AI Generation error:', error);
+        res.status(500).json({ error: 'Failed to generate cover letter with Gemini.' });
     }
 });
 
