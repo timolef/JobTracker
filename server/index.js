@@ -1,30 +1,21 @@
 require('dotenv').config();
 const express = require('express');
-const cors = require('cors');
 const { scrapeJobs } = require('./scraper');
 const { initDB } = require('./db');
 const authRoutes = require('./auth');
 
+// Express Initialization
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // 1. CORS & Security Headers (MUST BE FIRST)
-const allowedOrigins = [
-    'https://job-tracker-ten-sooty.vercel.app',
-    'http://localhost:5173',
-    'http://localhost:4173',
-    'https://jobtracker-production-03e6.up.railway.app'
-];
-
 app.use((req, res, next) => {
-    // 1. CORS Headers - Direct Echo
     const origin = req.header('Origin') || req.header('origin');
 
     if (origin) {
         res.setHeader('Access-Control-Allow-Origin', origin);
         res.setHeader('Access-Control-Allow-Credentials', 'true');
     } else {
-        // Fallback for non-browser requests
         res.setHeader('Access-Control-Allow-Origin', '*');
     }
 
@@ -38,11 +29,9 @@ app.use((req, res, next) => {
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
 
-    // Handle Preflight
     if (req.method === 'OPTIONS') {
         return res.status(200).end();
     }
-
     next();
 });
 
@@ -51,19 +40,16 @@ app.get('/api/health', (req, res) => {
     res.json({
         status: 'UP',
         time: new Date().toISOString(),
-        env: process.env.NODE_ENV || 'development'
+        node: process.version,
+        env: process.env.NODE_ENV || 'production'
     });
 });
-
-// Initialize Database
-initDB();
-
 
 app.use(express.json());
 
 // Request logger
 app.use((req, res, next) => {
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} - Origin: ${req.headers.origin}`);
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} - Origin: ${req.headers.origin || 'none'}`);
     next();
 });
 
@@ -73,7 +59,6 @@ app.use('/api/applications', require('./applications'));
 app.use('/api/documents', require('./documents'));
 app.use('/api/contacts', require('./contacts'));
 app.use('/api/interviews', require('./interviews'));
-
 
 app.post('/api/scrape', async (req, res) => {
     const { platform, keyword, location, limit } = req.body;
@@ -94,12 +79,24 @@ app.post('/api/scrape', async (req, res) => {
     }
 });
 
-// 404 Handler for debugging
+// 404 Handler
 app.use((req, res) => {
-    console.log(`[404] Route not found: ${req.method} ${req.url}`);
     res.status(404).json({ error: `Route not found: ${req.method} ${req.url}` });
 });
 
-app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+// Start Server
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`=================================`);
+    console.log(`🚀 Server starting on 0.0.0.0:${PORT}`);
+    console.log(`🕒 ${new Date().toISOString()}`);
+    console.log(`=================================`);
+
+    // Initialize Database after server is up
+    console.log('⏳ Initializing database...');
+    initDB().then(() => {
+        console.log('✅ Database connected and initialized.');
+    }).catch(err => {
+        console.error('❌ Database initialization CRASH:', err);
+        // We don't exit here anymore to allow /api/health to work for debugging
+    });
 });
