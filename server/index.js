@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 3000;
 // Initialize Database
 initDB();
 
-// CORS Configuration
+// CORS Configuration & Headers Injection
 const allowedOrigins = [
     'https://job-tracker-ten-sooty.vercel.app',
     'http://localhost:5173',
@@ -19,30 +19,30 @@ const allowedOrigins = [
     'https://jobtracker-production-03e6.up.railway.app'
 ];
 
-app.use(cors({
-    origin: function (origin, callback) {
-        // allow requests with no origin (like mobile apps or curl requests)
-        if (!origin) return callback(null, true);
-        if (allowedOrigins.indexOf(origin) === -1) {
-            console.log(`[CORS] Rejected Origin: ${origin}`);
-            // Let's be a bit more permissive during debugging if it's a vercel/localhost origin
-            if (origin.includes('vercel.app') || origin.includes('localhost')) {
-                return callback(null, true);
-            }
-            return callback(null, false);
-        }
-        return callback(null, true);
-    },
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true,
-    optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 244
-}));
+app.use((req, res, next) => {
+    const origin = req.headers.origin;
+
+    if (origin && (allowedOrigins.includes(origin) || origin.includes('vercel.app'))) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+    }
+
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Vary', 'Origin');
+
+    // Handle preflight immediately with 200
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+    next();
+});
+
 app.use(express.json());
 
 // Request logger
 app.use((req, res, next) => {
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} - Origin: ${req.headers.origin}`);
     next();
 });
 
