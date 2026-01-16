@@ -6,7 +6,14 @@ const authRoutes = require('./auth');
 
 // Express Initialization
 const app = express();
-const PORT = process.env.PORT || 3000;
+let PORT = process.env.PORT || 8080;
+
+// Railway/Cloud specific port fixer: 3306 is often injected as MySQL port and causes 502 conflicts
+if (PORT === "3306" || PORT === 3306) {
+    console.warn(`⚠️  WARNING: PORT is set to 3306 (MySQL port). This often causes 502 errors on Railway.`);
+    console.warn(`🔄 Switching to port 8080 for web safety...`);
+    PORT = 8080;
+}
 
 // 1. CORS & Security Headers (MUST BE FIRST)
 app.use((req, res, next) => {
@@ -41,7 +48,8 @@ app.get('/api/health', (req, res) => {
         status: 'UP',
         time: new Date().toISOString(),
         node: process.version,
-        env: process.env.NODE_ENV || 'production'
+        env: process.env.NODE_ENV || 'production',
+        db: 'checking...'
     });
 });
 
