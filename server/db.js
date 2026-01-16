@@ -29,6 +29,19 @@ async function initDB() {
     `);
 
     await connection.query(`
+      CREATE TABLE IF NOT EXISTS documents (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        type ENUM('CV', 'CoverLetter', 'Other') NOT NULL,
+        file_path VARCHAR(255),
+        content TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+
+    await connection.query(`
       CREATE TABLE IF NOT EXISTS applications (
         id INT AUTO_INCREMENT PRIMARY KEY,
         user_id INT NOT NULL,
@@ -47,49 +60,6 @@ async function initDB() {
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
         FOREIGN KEY (cv_id) REFERENCES documents(id) ON DELETE SET NULL,
         FOREIGN KEY (cover_letter_id) REFERENCES documents(id) ON DELETE SET NULL
-      )
-    `);
-
-    // Ensure columns exist for existing databases
-    try {
-      await connection.query('ALTER TABLE users ADD COLUMN is_premium BOOLEAN DEFAULT FALSE');
-    } catch (e) { /* ignore if column exists */ }
-
-    try {
-      await connection.query('ALTER TABLE applications ADD COLUMN cv_id INT');
-    } catch (e) { /* ignore if column exists */ }
-    try {
-      await connection.query('ALTER TABLE applications ADD COLUMN cover_letter_id INT');
-    } catch (e) { /* ignore if column exists */ }
-    try {
-      await connection.query('ALTER TABLE applications ADD COLUMN follow_up_date DATE');
-    } catch (e) { /* ignore if column exists */ }
-    try {
-      await connection.query('ALTER TABLE applications ADD FOREIGN KEY (cv_id) REFERENCES documents(id) ON DELETE SET NULL');
-    } catch (e) { /* ignore if key exists */ }
-    try {
-      await connection.query('ALTER TABLE applications ADD FOREIGN KEY (cover_letter_id) REFERENCES documents(id) ON DELETE SET NULL');
-    } catch (e) { /* ignore if key exists */ }
-
-    // Ensure contacts column exists
-    try {
-      await connection.query('ALTER TABLE contacts ADD COLUMN follow_up_date DATE');
-    } catch (e) { /* ignore if column exists */ }
-
-    // In a real app we'd have an 'applications' table too, but for MVP we might stick to local storage for data 
-    // or we'd need to migrate that too. The prompt specifically asked for "inscription et connexion sécurisé". 
-    // I will stick to User Auth for now to keep it simple as requested.
-
-    await connection.query(`
-      CREATE TABLE IF NOT EXISTS documents (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        user_id INT NOT NULL,
-        name VARCHAR(255) NOT NULL,
-        type ENUM('CV', 'CoverLetter', 'Other') NOT NULL,
-        file_path VARCHAR(255),
-        content TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
       )
     `);
 
@@ -128,6 +98,29 @@ async function initDB() {
         FOREIGN KEY (application_id) REFERENCES applications(id) ON DELETE SET NULL
       )
     `);
+
+    // Safe Migrations
+    console.log('Running safe migrations...');
+    const tables = ['users', 'applications', 'contacts'];
+
+    // Check if column exists before adding it
+    const checkColumnAndAdd = async (table, column, type) => {
+      try {
+        const [rows] = await connection.query(`SHOW COLUMNS FROM ${table} LIKE ?`, [column]);
+        if (rows.length === 0) {
+          await connection.query(`ALTER TABLE ${table} ADD COLUMN ${column} ${type}`);
+          console.log(`Added column ${column} to ${table}`);
+        }
+      } catch (err) {
+        console.warn(`Could not add column ${column} to ${table}:`, err.message);
+      }
+    };
+
+    await checkColumnAndAdd('users', 'is_premium', 'BOOLEAN DEFAULT FALSE');
+    await checkColumnAndAdd('applications', 'cv_id', 'INT');
+    await checkColumnAndAdd('applications', 'cover_letter_id', 'INT');
+    await checkColumnAndAdd('applications', 'follow_up_date', 'DATE');
+    await checkColumnAndAdd('contacts', 'follow_up_date', 'DATE');
 
     connection.release();
     console.log('Database initialized (Users, Applications, Documents tables ready).');

@@ -17,13 +17,14 @@ const allowedOrigins = [
 ];
 
 app.use((req, res, next) => {
-    // 1. CORS Headers - Direct Echo for debugging & stability
-    const origin = req.header('Origin');
+    // 1. CORS Headers - Direct Echo
+    const origin = req.header('Origin') || req.header('origin');
 
     if (origin) {
         res.setHeader('Access-Control-Allow-Origin', origin);
         res.setHeader('Access-Control-Allow-Credentials', 'true');
     } else {
+        // Fallback for non-browser requests
         res.setHeader('Access-Control-Allow-Origin', '*');
     }
 
@@ -32,19 +33,26 @@ app.use((req, res, next) => {
     res.setHeader('Access-Control-Max-Age', '86400');
     res.setHeader('Vary', 'Origin');
 
-    // 2. NO-CACHE Headers (Requested by user)
+    // 2. NO-CACHE Headers
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
-    res.setHeader('Surrogate-Control', 'no-store');
 
-    // Handle Preflight immediately
+    // Handle Preflight
     if (req.method === 'OPTIONS') {
-        console.log(`[CORS OPTIONS] Echoing origin: ${origin}`);
         return res.status(200).end();
     }
 
     next();
+});
+
+// Health check
+app.get('/api/health', (req, res) => {
+    res.json({
+        status: 'UP',
+        time: new Date().toISOString(),
+        env: process.env.NODE_ENV || 'development'
+    });
 });
 
 // Initialize Database
