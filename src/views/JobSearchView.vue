@@ -24,6 +24,8 @@ const limit = ref(15)
 const isLoading = ref(false)
 const hasSearched = ref(false)
 const results = ref([])
+const selectedJobs = ref([])
+const importingJobs = ref(new Set()) // Track individual imports
 
 const platforms = ['LinkedIn', 'Indeed', 'Welcome to the Jungle', 'Glassdoor', 'Hellowork']
 
@@ -34,6 +36,7 @@ async function handleSearch() {
   isLoading.value = true
   hasSearched.value = false
   results.value = []
+  selectedJobs.value = [] // Clear selection on new search
 
   try {
     const response = await fetch(`${API_BASE_URL}/api/scrape`, {
@@ -64,21 +67,46 @@ async function handleSearch() {
   }
 }
 
-function importJob(job) {
-  appStore.addApplication({
-    company: job.company,
-    position: job.title,
-    location: job.location,
-    type: job.type,
-    status: 'To Apply',
-    link: job.link,
-    notes: `Imported from ${job.platform} search on ${new Date().toLocaleDateString()}`
-  })
+async function importJob(job) {
+  if (importingJobs.value.has(job.id)) return
   
-  // Mark as imported visually
-  const index = results.value.findIndex(j => j.id === job.id)
-  if (index !== -1) {
-    results.value[index].isImported = true
+  importingJobs.value.add(job.id)
+  try {
+    await appStore.addApplication({
+      company: job.company,
+      position: job.title,
+      location: job.location,
+      type: job.type,
+      status: 'To Apply',
+      link: job.link,
+      notes: `Imported from ${job.platform} search on ${new Date().toLocaleDateString()}`
+    })
+    
+    // Mark as imported visually
+    const index = results.value.findIndex(j => j.id === job.id)
+    if (index !== -1) {
+      results.value[index].isImported = true
+    }
+  } finally {
+    importingJobs.value.delete(job.id)
+  }
+}
+
+async function importSelected() {
+  const toImport = results.value.filter(j => selectedJobs.value.includes(j.id) && !j.isImported)
+  if (toImport.length === 0) return
+
+  for (const job of toImport) {
+    await importJob(job)
+  }
+  selectedJobs.value = []
+}
+
+function toggleSelectAll() {
+  if (selectedJobs.value.length === results.value.filter(j => !j.isImported).length) {
+    selectedJobs.value = []
+  } else {
+    selectedJobs.value = results.value.filter(j => !j.isImported).map(j => j.id)
   }
 }
 
@@ -139,24 +167,49 @@ function goToApplications() {
 
     <!-- Results -->
     <div v-if="hasSearched && results.length > 0" class="space-y-4">
-      <h3 class="text-xl font-semibold">Found {{ results.length }} positions on {{ platform }}</h3>
+      <div class="flex items-center justify-between">
+        <h3 class="text-xl font-semibold">Found {{ results.length }} positions on {{ platform }}</h3>
+        <div v-if="results.some(j => !j.isImported)" class="flex items-center gap-2">
+          <Button variant="outline" size="sm" @click="toggleSelectAll">
+            {{ selectedJobs.length === results.filter(j => !j.isImported).length ? 'Deselect All' : 'Select All Available' }}
+          </Button>
+          <Button 
+            v-if="selectedJobs.length > 0" 
+            size="sm" 
+            class="bg-green-600 hover:bg-green-700 text-white"
+            @click="importSelected"
+          >
+            <Download class="h-4 w-4 mr-2" /> Import Selected ({{ selectedJobs.length }})
+          </Button>
+        </div>
+      </div>
       
-      <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-1">
-        <Card v-for="job in results" :key="job.id" class="hover:border-primary/50 transition-colors">
+      <div class="grid gap-4 lg:grid-cols-1">
+        <Card v-for="job in results" :key="job.id" class="hover:border-primary/50 transition-all duration-300 relative overflow-hidden group">
           <CardContent class="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div class="space-y-1">
-              <div class="flex items-center gap-2">
-                <h4 class="font-semibold text-lg">{{ job.title }}</h4>
-                <Badge variant="outline">{{ job.type }}</Badge>
+            <div class="flex items-start gap-4 flex-1">
+              <div v-if="!job.isImported" class="pt-1">
+                <input 
+                  type="checkbox" 
+                  :value="job.id" 
+                  v-model="selectedJobs"
+                  class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                />
               </div>
-              <div class="flex items-center gap-2 text-muted-foreground">
-                <Building2 class="h-4 w-4" />
-                <span>{{ job.company }}</span>
-                <span class="text-xs">&bull;</span>
-                <MapPin class="h-4 w-4" />
-                <span class="text-sm">{{ job.location }}</span>
+              <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                  <h4 class="font-semibold text-lg">{{ job.title }}</h4>
+                  <Badge variant="outline">{{ job.type }}</Badge>
+                </div>
+                <div class="flex items-center gap-2 text-muted-foreground">
+                  <Building2 class="h-4 w-4" />
+                  <span>{{ job.company }}</span>
+                  <span class="text-xs">&bull;</span>
+                  <MapPin class="h-4 w-4" />
+                  <span class="text-sm">{{ job.location }}</span>
+                </div>
+                <p class="text-xs text-muted-foreground mt-1">Posted {{ job.posted }}</p>
               </div>
-              <p class="text-xs text-muted-foreground mt-1">Posted {{ job.posted }}</p>
             </div>
 
             <div class="flex items-center gap-2 w-full sm:w-auto">
@@ -167,10 +220,12 @@ function goToApplications() {
                 :variant="job.isImported ? 'secondary' : 'default'" 
                 size="sm" 
                 @click="importJob(job)"
-                :disabled="job.isImported"
+                :disabled="job.isImported || importingJobs.has(job.id)"
               >
-                <Download v-if="!job.isImported" class="h-4 w-4 mr-2" />
+                <Download v-if="!job.isImported && !importingJobs.has(job.id)" class="h-4 w-4 mr-2" />
+                <Loader2 v-if="importingJobs.has(job.id)" class="h-4 w-4 mr-2 animate-spin" />
                 <span v-if="job.isImported">Imported</span>
+                <span v-else-if="importingJobs.has(job.id)">Importing...</span>
                 <span v-else>Import</span>
               </Button>
             </div>

@@ -134,7 +134,7 @@ async function scrapeJobs(platform, keyword, location, limit = 15) {
                     return Array.from(items).map((item, id) => {
                         const titleEl = item.querySelector('h3') || item.querySelector('h4');
                         const companyEl = item.querySelector('span');
-                        const linkEl = item.closest('a') || item.querySelector('a');
+                        const linkEl = item.closest('a') || item.querySelector('a') || item.parentElement.closest('a');
                         const metadataEls = item.querySelectorAll('div > span');
 
                         let loc = 'France';
@@ -143,23 +143,41 @@ async function scrapeJobs(platform, keyword, location, limit = 15) {
                         if (metadataEls.length > 1) type = metadataEls[1]?.textContent;
 
                         return {
-                            id: `wttj-${pageIdx}-${id}`,
+                            id: null, // assigned below
                             title: titleEl ? titleEl.textContent.trim() : 'Unknown Position',
                             company: companyEl ? companyEl.textContent.trim() : 'Unknown Company',
                             location: loc,
                             type: type,
-                            link: linkEl ? linkEl.href : '#',
+                            link: linkEl ? (linkEl.href.startsWith('/') ? 'https://www.welcometothejungle.com' + linkEl.getAttribute('href') : linkEl.href) : '#',
                             platform: 'WTTJ',
                             posted: 'Recently'
                         };
                     });
                 }, pageNum);
 
-                if (newJobs.length === 0) break;
-                jobs.push(...newJobs);
+                if (newJobs.length === 0) {
+                    console.log('[WTTJ] No more jobs found on this page.');
+                    break;
+                }
+
+                // Deduplicate by link
+                const uniqueNewJobs = [];
+                const currentLinks = new Set(jobs.map(j => j.link));
+
+                newJobs.forEach((job, idx) => {
+                    if (job.link && job.link !== '#' && !currentLinks.has(job.link)) {
+                        job.id = `wttj-${pageNum}-${idx}-${Date.now()}`;
+                        uniqueNewJobs.push(job);
+                        currentLinks.add(job.link);
+                    }
+                });
+
+                console.log(`[WTTJ] Found ${uniqueNewJobs.length} new unique jobs on page ${pageNum + 1}`);
+                jobs.push(...uniqueNewJobs);
 
                 if (jobs.length >= limit) break;
                 pageNum++;
+                await new Promise(r => setTimeout(r, 1500));
             }
 
         } else if (platform === 'LinkedIn') {
@@ -169,13 +187,13 @@ async function scrapeJobs(platform, keyword, location, limit = 15) {
 
             while (jobs.length < limit) {
                 const url = pageNum === 0 ? baseUrl : `${baseUrl}&start=${pageNum * 25}`;
-                console.log(`Navigating to LinkedIn Page ${pageNum + 1}`);
+                console.log(`[LinkedIn] Navigating to Page ${pageNum + 1}: ${url}`);
                 await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
 
                 try {
                     await page.waitForSelector('.jobs-search__results-list li', { timeout: 10000 });
                 } catch (e) {
-                    console.log(`LinkedIn: No results found at ${url}`);
+                    console.log(`[LinkedIn] No results found at ${url}`);
                     break;
                 }
 
@@ -189,7 +207,7 @@ async function scrapeJobs(platform, keyword, location, limit = 15) {
                         const timeEl = item.querySelector('time');
 
                         return {
-                            id: `li-${pageIdx}-${id}`,
+                            id: `li-${pageIdx}-${id}-${Date.now()}`,
                             title: titleEl ? titleEl.textContent.trim() : 'Unknown Role',
                             company: companyEl ? companyEl.textContent.trim() : 'Unknown Company',
                             location: locationEl ? locationEl.textContent.trim() : 'Remote/Unknown',
@@ -201,7 +219,10 @@ async function scrapeJobs(platform, keyword, location, limit = 15) {
                     });
                 }, pageNum);
 
-                if (newJobs.length === 0) break;
+                if (newJobs.length === 0) {
+                    console.log('[LinkedIn] No more results found.');
+                    break;
+                }
                 jobs.push(...newJobs);
 
                 if (jobs.length >= limit) break;

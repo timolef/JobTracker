@@ -1,3 +1,9 @@
+<script>
+export default {
+  inheritAttrs: false
+}
+</script>
+
 <script setup>
 import { computed } from 'vue'
 import { cn } from '@/lib/utils'
@@ -25,6 +31,7 @@ const inputClass = computed(() => {
 
 <template>
   <input
+    v-bind="$attrs"
     :value="modelValue"
     @input="$emit('update:modelValue', $event.target.value)"
     :class="inputClass"

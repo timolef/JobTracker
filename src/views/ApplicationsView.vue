@@ -29,6 +29,7 @@ const statusFilter = ref('All')
 const isDialogOpen = ref(false)
 const isEditing = ref(false)
 const currentId = ref(null)
+const sortBy = ref('date-desc')
 
 const form = ref({
   company: '',
@@ -49,12 +50,30 @@ const coverLetters = computed(() => docStore.documents.filter(d => d.type === 'C
 const statuses = ['To Apply', 'Applied', 'Interview', 'Refusal', 'Offer']
 const types = ['Full-time', 'Part-time', 'Internship', 'Freelance', 'Apprenticeship']
 
+const stats = computed(() => {
+  return [
+    { label: t('applications.allStatuses'), value: appStore.applications.length, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+    { label: 'Applied', value: appStore.applications.filter(a => a.status === 'Applied').length, color: 'text-primary', bg: 'bg-primary/10' },
+    { label: 'Interviews', value: appStore.applications.filter(a => a.status === 'Interview').length, color: 'text-purple-500', bg: 'bg-purple-500/10' },
+    { label: 'Offers', value: appStore.applications.filter(a => a.status === 'Offer').length, color: 'text-green-500', bg: 'bg-green-500/10' },
+  ]
+})
+
 const filteredApplications = computed(() => {
-  return appStore.applications.filter(app => {
+  let apps = appStore.applications.filter(app => {
     const matchesSearch = app.company.toLowerCase().includes(searchQuery.value.toLowerCase()) || 
                           app.position.toLowerCase().includes(searchQuery.value.toLowerCase())
     const matchesStatus = statusFilter.value === 'All' || app.status === statusFilter.value
     return matchesSearch && matchesStatus
+  })
+
+  // Sort logic
+  return apps.sort((a, b) => {
+    if (sortBy.value === 'date-desc') return new Date(b.date_applied || b.created_at) - new Date(a.date_applied || a.created_at)
+    if (sortBy.value === 'date-asc') return new Date(a.date_applied || a.created_at) - new Date(b.date_applied || b.created_at)
+    if (sortBy.value === 'company') return a.company.localeCompare(b.company)
+    if (sortBy.value === 'position') return a.position.localeCompare(b.position)
+    return 0
   })
 })
 
@@ -137,16 +156,38 @@ function needsFollowUp(app) {
       </Button>
     </div>
 
+    <!-- Quick Stats Bar -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div v-for="stat in stats" :key="stat.label" class="glass border-none p-4 rounded-2xl flex flex-col gap-1 transition-transform hover:scale-[1.02]">
+        <span class="text-xs font-medium text-muted-foreground uppercase tracking-wider">{{ stat.label }}</span>
+        <div class="flex items-end justify-between">
+           <span class="text-2xl font-bold">{{ stat.value }}</span>
+           <div :class="[stat.bg, stat.color, 'p-1.5 rounded-lg']">
+              <Building2 v-if="stat.label.includes('All')" class="h-4 w-4" />
+              <Calendar v-else class="h-4 w-4" />
+           </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Filters -->
     <div class="flex flex-col sm:flex-row sm:items-center gap-4">
       <div class="relative w-full max-w-sm">
         <Search class="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input type="search" :placeholder="t('applications.searchPlaceholder')" class="pl-8 w-full" v-model="searchQuery" />
       </div>
-      <select v-model="statusFilter" class="w-full sm:w-auto h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-        <option value="All">{{ t('applications.allStatuses') }}</option>
-        <option v-for="s in statuses" :key="s" :value="s">{{ s }}</option>
-      </select>
+      <div class="flex flex-wrap items-center gap-2">
+        <select v-model="statusFilter" class="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+          <option value="All">{{ t('applications.allStatuses') }}</option>
+          <option v-for="s in statuses" :key="s" :value="s">{{ s }}</option>
+        </select>
+        <select v-model="sortBy" class="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+          <option value="date-desc">Newest First</option>
+          <option value="date-asc">Oldest First</option>
+          <option value="company">Company (A-Z)</option>
+          <option value="position">Position (A-Z)</option>
+        </select>
+      </div>
     </div>
 
     <!-- Grid -->
@@ -211,8 +252,16 @@ function needsFollowUp(app) {
         </CardContent>
       </Card>
       
-      <div v-if="filteredApplications.length === 0" class="col-span-full text-center py-12 text-muted-foreground bg-muted/20 rounded-lg border border-dashed">
-         No applications found matching your criteria.
+      <div v-if="filteredApplications.length === 0" class="col-span-full flex flex-col items-center justify-center py-20 text-center glass rounded-3xl border-dashed border-2">
+         <div class="bg-primary/10 p-4 rounded-full mb-4">
+            <Building2 class="h-8 w-8 text-primary" />
+         </div>
+         <h3 class="text-xl font-bold mb-2">No applications found</h3>
+         <p class="text-muted-foreground mb-6 max-w-xs">Start your journey by searching for jobs or adding one manually.</p>
+         <div class="flex gap-3">
+            <Button variant="outline" @click="openAddModal">Add Manually</Button>
+            <Button @click="router.push('/search')">Search Jobs</Button>
+         </div>
       </div>
     </div>
 

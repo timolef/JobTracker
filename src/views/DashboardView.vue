@@ -11,6 +11,7 @@ import CardContent from '@/components/ui/CardContent.vue'
 import Button from '@/components/ui/Button.vue'
 import Dialog from '@/components/ui/Dialog.vue'
 import Label from '@/components/ui/Label.vue'
+import Input from '@/components/ui/Input.vue'
 import { Briefcase, CheckCircle2, MessageSquare, XCircle, Eye, TrendingUp, PieChart as PieChartIcon, Bell, User, Mail, Phone, Linkedin, ExternalLink } from 'lucide-vue-next'
 import {
   Chart as ChartJS,
@@ -84,6 +85,35 @@ const isDetailsOpen = ref(false)
 const selectedApp = ref(null)
 const isContactDetailsOpen = ref(false)
 const selectedContact = ref(null)
+
+const weeklyTarget = ref(Number(localStorage.getItem('weekly_target') || 10))
+const isTargetModalOpen = ref(false)
+const targetInput = ref(weeklyTarget.value)
+
+const weeklyProgress = computed(() => {
+  const startOfWeek = new Date()
+  startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + 1)
+  startOfWeek.setHours(0, 0, 0, 0)
+  
+  return appStore.applications.filter(app => {
+    const appliedAt = new Date(app.date_applied || app.created_at)
+    return appliedAt >= startOfWeek
+  }).length
+})
+
+function openTargetModal() {
+  targetInput.value = weeklyTarget.value
+  isTargetModalOpen.value = true
+}
+
+function saveTarget() {
+  const val = Number(targetInput.value)
+  if (val && val > 0) {
+    weeklyTarget.value = val
+    localStorage.setItem('weekly_target', val.toString())
+    isTargetModalOpen.value = false
+  }
+}
 
 function openDetails(app) {
   selectedApp.value = app
@@ -366,18 +396,57 @@ const doughnutOptions = {
         </CardContent>
       </Card>
       
-      <Card class="col-span-3">
-         <CardHeader>
-            <CardTitle>Motivation</CardTitle>
+      <Card class="col-span-3 glass border-none overflow-hidden relative">
+         <div class="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+            <TrendingUp class="h-24 w-24 text-primary" />
+         </div>
+         <CardHeader class="pb-2">
+            <CardTitle class="text-lg font-semibold flex items-center justify-between">
+               <span>Weekly Goal</span>
+               <Button variant="ghost" size="sm" class="h-6 text-[10px] uppercase font-bold text-primary hover:bg-primary/10" @click="openTargetModal">set target</Button>
+            </CardTitle>
          </CardHeader>
          <CardContent>
-            <p class="text-sm text-muted-foreground">
-               "Success consists of going from failure to failure without loss of enthusiasm."
-            </p>
-            <p class="text-xs text-muted-foreground mt-2">- Winston Churchill</p>
+            <div class="space-y-4">
+               <div class="flex items-end justify-between">
+                  <div class="flex flex-col">
+                     <span class="text-3xl font-bold">{{ weeklyProgress }}</span>
+                     <span class="text-xs text-muted-foreground uppercase tracking-widest font-semibold">applications this week</span>
+                  </div>
+                  <div class="text-right">
+                     <span class="text-sm font-bold">{{ Math.round((weeklyProgress / weeklyTarget) * 100) }}%</span>
+                  </div>
+               </div>
+               
+               <div class="w-full bg-muted/30 rounded-full h-2.5 overflow-hidden border border-border/50">
+                  <div 
+                    class="bg-primary h-full transition-all duration-1000 ease-out flex items-center justify-end pr-1 shadow-[0_0_10px_rgba(59,130,246,0.5)]" 
+                    :style="{ width: `${Math.min((weeklyProgress / weeklyTarget) * 100, 100)}%` }"
+                  >
+                  </div>
+               </div>
+
+               <p class="text-[11px] text-muted-foreground italic">
+                  "{{ weeklyProgress >= weeklyTarget ? 'Target reached! Great job! 🚀' : `Only ${weeklyTarget - weeklyProgress} more to reach your weekly goal.` }}"
+               </p>
+            </div>
          </CardContent>
       </Card>
     </div>
+
+    <!-- Target Goal Dialog -->
+    <Dialog v-model:open="isTargetModalOpen" title="Set Weekly Application Goal">
+      <div class="space-y-4 pt-4">
+        <div class="space-y-2">
+          <Label for="target">How many applications per week?</Label>
+          <Input id="target" type="number" v-model="targetInput" min="1" max="100" />
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <Button variant="outline" @click="isTargetModalOpen = false">Cancel</Button>
+          <Button @click="saveTarget">Save Goal</Button>
+        </div>
+      </div>
+    </Dialog>
     <!-- Details Dialog -->
     <Dialog v-model:open="isDetailsOpen" title="Application Details">
       <div v-if="selectedApp" class="space-y-4 mt-4">
