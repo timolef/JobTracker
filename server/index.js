@@ -11,27 +11,33 @@ const PORT = process.env.PORT || 3000;
 // Initialize Database
 initDB();
 
-// Manual CORS Middleware to fix persistent issues
-app.use((req, res, next) => {
-    const allowedOrigins = ['https://job-tracker-ten-sooty.vercel.app', 'http://localhost:5173', 'http://localhost:4173', 'https://jobtracker-production-03e6.up.railway.app'];
-    const origin = req.headers.origin;
-    console.log(`[CORS] Request Origin: ${origin}, Allowed: ${allowedOrigins.includes(origin)}`);
+// CORS Configuration
+const allowedOrigins = [
+    'https://job-tracker-ten-sooty.vercel.app',
+    'http://localhost:5173',
+    'http://localhost:4173',
+    'https://jobtracker-production-03e6.up.railway.app'
+];
 
-    if (allowedOrigins.includes(origin)) {
-        res.setHeader('Access-Control-Allow-Origin', origin);
-    }
-
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-
-    // Handle preflight immediately
-    if (req.method === 'OPTIONS') {
-        return res.status(200).end();
-    }
-
-    next();
-});
+app.use(cors({
+    origin: function (origin, callback) {
+        // allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.indexOf(origin) === -1) {
+            console.log(`[CORS] Rejected Origin: ${origin}`);
+            // Let's be a bit more permissive during debugging if it's a vercel/localhost origin
+            if (origin.includes('vercel.app') || origin.includes('localhost')) {
+                return callback(null, true);
+            }
+            return callback(null, false);
+        }
+        return callback(null, true);
+    },
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+    optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 244
+}));
 app.use(express.json());
 
 // Request logger

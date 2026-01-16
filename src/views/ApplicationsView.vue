@@ -10,9 +10,12 @@ import Badge from '@/components/ui/Badge.vue'
 import Dialog from '@/components/ui/Dialog.vue'
 import Card from '@/components/ui/Card.vue'
 import CardContent from '@/components/ui/CardContent.vue'
+import AdBanner from '@/components/AdBanner.vue'
+import { useAuthStore } from '@/stores/auth'
 
 const appStore = useApplicationStore()
 const docStore = useDocumentsStore()
+const authStore = useAuthStore()
 
 onMounted(() => {
   appStore.fetchApplications()
@@ -122,15 +125,18 @@ function needsFollowUp(app) {
 
 <template>
   <div class="space-y-6">
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div>
         <h2 class="text-3xl font-bold tracking-tight">Applications</h2>
-        <p class="text-muted-foreground">Manage and track your job applications.</p>
+        <p class="text-muted-foreground mt-1">Manage and track your job applications.</p>
       </div>
-      <Button @click="openAddModal">
-        <Plus class="mr-2 h-4 w-4" /> Add Application
+      <Button class="rounded-xl shadow-lg shadow-primary/20" @click="openAddDialog">
+        <Plus class="h-4 w-4 mr-2" /> Add Application
       </Button>
     </div>
+
+    <!-- Ad Banner for Free Users -->
+    <AdBanner v-if="!authStore.isPremium" type="horizontal" />
 
     <!-- Filters -->
     <div class="flex items-center gap-4">

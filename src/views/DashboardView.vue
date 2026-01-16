@@ -3,6 +3,7 @@ import { useApplicationStore } from '@/stores/applications'
 import { useAuthStore } from '@/stores/auth'
 import { useContactStore } from '@/stores/contacts'
 import { computed, onMounted, ref } from 'vue'
+import AdBanner from '@/components/AdBanner.vue'
 import Card from '@/components/ui/Card.vue'
 import CardHeader from '@/components/ui/CardHeader.vue'
 import CardTitle from '@/components/ui/CardTitle.vue'
@@ -249,6 +250,9 @@ const doughnutOptions = {
         <p class="text-muted-foreground mt-1">Welcome back! Here's an overview of your progress.</p>
       </div>
     </div>
+
+    <!-- Ad Banner for Free Users -->
+    <AdBanner v-if="!authStore.isPremium" type="horizontal" class="mb-8" />
 
     <!-- Stats Grid -->
     <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-4">

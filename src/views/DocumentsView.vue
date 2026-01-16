@@ -10,6 +10,7 @@ import Input from '@/components/ui/Input.vue'
 import Label from '@/components/ui/Label.vue'
 import Card from '@/components/ui/Card.vue'
 import CardContent from '@/components/ui/CardContent.vue'
+import AdBanner from '@/components/AdBanner.vue'
 
 const docStore = useDocumentsStore()
 const authStore = useAuthStore()
@@ -122,6 +123,9 @@ function formatDate(isoString) {
          </Button>
       </div>
     </div>
+
+    <!-- Ad Banner for Free Users -->
+    <AdBanner v-if="!authStore.isPremium" type="horizontal" />
 
     <!-- Documents Grid -->
     <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
