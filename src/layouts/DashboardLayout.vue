@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useUIStore } from '@/stores/ui'
 import { useI18n } from 'vue-i18n'
 import { 
   LayoutDashboard, 
@@ -52,34 +53,10 @@ function handleNavClick(item, e) {
 
 const currentRoute = computed(() => route.path)
 
-const theme = ref('light')
-
-function toggleTheme() {
-  const newTheme = theme.value === 'light' ? 'dark' : 'light'
-  theme.value = newTheme
-  
-  const root = window.document.documentElement
-  root.classList.remove('light', 'dark')
-  root.classList.add(newTheme)
-  
-  localStorage.setItem('theme', newTheme)
-}
-
-// Init theme
+const ui = useUIStore()
 
 onMounted(() => {
-  const savedTheme = localStorage.getItem('theme')
-  const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-  
-  if (savedTheme) {
-    theme.value = savedTheme
-    document.documentElement.classList.add(savedTheme)
-  } else if (systemDark) {
-    theme.value = 'dark'
-    document.documentElement.classList.add('dark')
-  } else {
-    document.documentElement.classList.add('light')
-  }
+   // Theme is now initialized in App.vue
 })
 </script>
 
@@ -166,15 +143,15 @@ onMounted(() => {
                  </button>
               </div>
               <div class="flex items-center justify-between px-2 py-1 rounded-xl bg-muted/30 border border-border/50">
-                 <Sun class="h-3.5 w-3.5 text-muted-foreground" :class="{ 'text-primary': theme === 'light' }" />
+                 <Sun class="h-3.5 w-3.5 text-muted-foreground" :class="{ 'text-primary': ui.theme === 'light' }" />
                  <button 
-                   @click="toggleTheme" 
+                   @click="ui.toggleTheme" 
                    class="relative inline-flex h-5 w-9 items-center rounded-full transition-all"
-                   :class="theme === 'dark' ? 'bg-primary' : 'bg-slate-200'"
+                   :class="ui.theme === 'dark' ? 'bg-primary' : 'bg-slate-200'"
                  >
-                   <span class="block h-4 w-4 rounded-full bg-white transition-transform" :class="theme === 'dark' ? 'translate-x-4' : 'translate-x-1'" />
+                   <span class="block h-4 w-4 rounded-full bg-white transition-transform" :class="ui.theme === 'dark' ? 'translate-x-4' : 'translate-x-1'" />
                  </button>
-                 <Moon class="h-3.5 w-3.5 text-muted-foreground" :class="{ 'text-primary': theme === 'dark' }" />
+                 <Moon class="h-3.5 w-3.5 text-muted-foreground" :class="{ 'text-primary': ui.theme === 'dark' }" />
               </div>
            </div>
 
@@ -249,18 +226,18 @@ onMounted(() => {
 
       <div class="px-4 py-4">
         <div class="flex items-center justify-between p-2 rounded-xl bg-muted/40 backdrop-blur-sm border border-border/50">
-           <Sun class="h-3.5 w-3.5 text-muted-foreground" :class="{ 'text-primary': theme === 'light' }" />
+           <Sun class="h-3.5 w-3.5 text-muted-foreground" :class="{ 'text-primary': ui.theme === 'light' }" />
            <button 
-             @click="toggleTheme" 
+             @click="ui.toggleTheme" 
              class="relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-             :class="theme === 'dark' ? 'bg-primary' : 'bg-slate-200'"
+             :class="ui.theme === 'dark' ? 'bg-primary' : 'bg-slate-200'"
            >
              <span
                class="pointer-events-none block h-5 w-5 rounded-full bg-white shadow-xl ring-0 transition-transform duration-500"
-               :class="theme === 'dark' ? 'translate-x-5' : 'translate-x-1'"
+               :class="ui.theme === 'dark' ? 'translate-x-5' : 'translate-x-1'"
              />
            </button>
-           <Moon class="h-3.5 w-3.5 text-muted-foreground" :class="{ 'text-primary': theme === 'dark' }" />
+           <Moon class="h-3.5 w-3.5 text-muted-foreground" :class="{ 'text-primary': ui.theme === 'dark' }" />
         </div>
       </div>
 

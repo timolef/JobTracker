@@ -1,4 +1,12 @@
 <script setup>
+import { onMounted } from 'vue'
+import { useUIStore } from '@/stores/ui'
+
+const ui = useUIStore()
+
+onMounted(() => {
+  ui.initTheme()
+})
 </script>
 
 <template>

@@ -11,7 +11,10 @@ import CardTitle from '@/components/ui/CardTitle.vue'
 import CardDescription from '@/components/ui/CardDescription.vue'
 import CardContent from '@/components/ui/CardContent.vue'
 import CardFooter from '@/components/ui/CardFooter.vue'
-import { LogIn } from 'lucide-vue-next'
+import { LogIn, Sun, Moon } from 'lucide-vue-next'
+import { useUIStore } from '@/stores/ui'
+
+const ui = useUIStore()
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -35,7 +38,17 @@ async function handleLogin() {
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-muted/50 p-4">
+  <div class="min-h-screen flex items-center justify-center bg-muted/50 p-4 relative">
+    <!-- Theme Toggle -->
+    <Button 
+      variant="ghost" 
+      size="icon" 
+      @click="ui.toggleTheme" 
+      class="absolute top-4 right-4 rounded-full"
+    >
+      <Sun v-if="ui.theme === 'light'" class="h-5 w-5" />
+      <Moon v-else class="h-5 w-5" />
+    </Button>
     <Card class="w-full max-w-md shadow-lg border-opacity-50">
       <CardHeader class="space-y-1">
         <CardTitle class="text-2xl font-bold tracking-tight text-center">Welcome back</CardTitle>
