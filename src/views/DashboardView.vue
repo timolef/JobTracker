@@ -4,7 +4,6 @@ import { useAuthStore } from '@/stores/auth'
 import { useContactStore } from '@/stores/contacts'
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import AdBanner from '@/components/AdBanner.vue'
 import Card from '@/components/ui/Card.vue'
 import CardHeader from '@/components/ui/CardHeader.vue'
 import CardTitle from '@/components/ui/CardTitle.vue'
@@ -247,14 +246,10 @@ const doughnutOptions = {
       <div>
       <div class="flex items-center gap-3">
         <h2 class="text-3xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">{{ t('dashboard.title') }}</h2>
-        <span v-if="authStore.isPremium" class="bg-primary/10 text-primary text-[10px] font-bold px-2 py-1 rounded border border-primary/20 shadow-sm animate-pulse">{{ t('dashboard.pro_member') }}</span>
       </div>
         <p class="text-muted-foreground mt-1">{{ t('dashboard.welcome') }}</p>
       </div>
     </div>
-
-    <!-- Ad Banner for Free Users -->
-    <AdBanner v-if="!authStore.isPremium" type="horizontal" class="mb-8" />
 
     <!-- Stats Grid -->
     <div class="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">

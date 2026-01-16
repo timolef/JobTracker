@@ -6,14 +6,13 @@ import { useAuthStore } from '@/stores/auth'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
-import { FileText, File, Plus, Download, Trash2, Upload, PenTool, Eye, Sparkles, Loader2, Lock } from 'lucide-vue-next'
+import { FileText, File, Plus, Download, Trash2, Upload, PenTool, Eye, Sparkles, Loader2 } from 'lucide-vue-next'
 import Button from '@/components/ui/Button.vue'
 import Dialog from '@/components/ui/Dialog.vue'
 import Input from '@/components/ui/Input.vue'
 import Label from '@/components/ui/Label.vue'
 import Card from '@/components/ui/Card.vue'
 import CardContent from '@/components/ui/CardContent.vue'
-import AdBanner from '@/components/AdBanner.vue'
 
 const docStore = useDocumentsStore()
 const authStore = useAuthStore()
@@ -112,11 +111,10 @@ function formatDate(isoString) {
          <Button 
             variant="outline" 
             class="flex-1 sm:flex-initial border-primary/50 text-primary hover:bg-primary/10 relative h-9 px-3" 
-            @click="authStore.isPremium ? (isAIModalOpen = true) : router.push('/pricing')"
+            @click="isAIModalOpen = true"
          >
             <Sparkles class="mr-2 h-4 w-4" /> 
             {{ t('documents.ai_gen') }}
-            <Lock v-if="!authStore.isPremium" class="absolute -top-1 -right-1 h-3 w-3 text-orange-500 bg-background rounded-full p-0.5 border" />
          </Button>
          <Button variant="outline" class="flex-1 sm:flex-initial h-9 px-3" @click="isEditorOpen = true">
             <PenTool class="mr-2 h-4 w-4" /> {{ t('documents.write') }}
@@ -126,9 +124,6 @@ function formatDate(isoString) {
          </Button>
       </div>
     </div>
-
-    <!-- Ad Banner for Free Users -->
-    <AdBanner v-if="!authStore.isPremium" type="horizontal" />
 
     <!-- Documents Grid -->
     <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

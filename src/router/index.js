@@ -44,11 +44,6 @@ const router = createRouter({
                     component: () => import('../views/DocumentsView.vue')
                 },
                 {
-                    path: 'kanban',
-                    name: 'kanban',
-                    component: () => import('../views/KanbanView.vue')
-                },
-                {
                     path: 'contacts',
                     name: 'contacts',
                     component: () => import('../views/ContactsView.vue')
@@ -57,11 +52,6 @@ const router = createRouter({
                     path: 'interviews',
                     name: 'interviews',
                     component: () => import('../views/InterviewsView.vue')
-                },
-                {
-                    path: 'pricing',
-                    name: 'pricing',
-                    component: () => import('../views/PricingView.vue')
                 },
                 {
                     path: 'profile',

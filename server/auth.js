@@ -91,26 +91,4 @@ router.get('/me', authenticateToken, async (req, res) => {
     }
 });
 
-// Mock Upgrade to Premium
-router.post('/upgrade', authenticateToken, async (req, res) => {
-    try {
-        await pool.query('UPDATE users SET is_premium = TRUE WHERE id = ?', [req.user.id]);
-        res.json({ message: 'Upgrade successful', is_premium: true });
-    } catch (error) {
-        console.error('Upgrade error:', error);
-        res.status(500).json({ error: 'Server error' });
-    }
-});
-
-// Downgrade / Cancel Subscription
-router.post('/downgrade', authenticateToken, async (req, res) => {
-    try {
-        await pool.query('UPDATE users SET is_premium = FALSE WHERE id = ?', [req.user.id]);
-        res.json({ message: 'Subscription cancelled', is_premium: false });
-    } catch (error) {
-        console.error('Downgrade error:', error);
-        res.status(500).json({ error: 'Server error' });
-    }
-});
-
 module.exports = router;

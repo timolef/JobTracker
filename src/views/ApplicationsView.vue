@@ -10,7 +10,6 @@ import Badge from '@/components/ui/Badge.vue'
 import Dialog from '@/components/ui/Dialog.vue'
 import Card from '@/components/ui/Card.vue'
 import CardContent from '@/components/ui/CardContent.vue'
-import AdBanner from '@/components/AdBanner.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useI18n } from 'vue-i18n'
 
@@ -137,9 +136,6 @@ function needsFollowUp(app) {
         <Plus class="h-4 w-4 mr-2" /> {{ t('applications.add_app') }}
       </Button>
     </div>
-
-    <!-- Ad Banner for Free Users -->
-    <AdBanner v-if="!authStore.isPremium" type="horizontal" />
 
     <!-- Filters -->
     <div class="flex flex-col sm:flex-row sm:items-center gap-4">
