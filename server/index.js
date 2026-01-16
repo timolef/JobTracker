@@ -75,14 +75,14 @@ app.post('/api/scrape', async (req, res) => {
         return res.status(400).json({ error: 'Platform and keyword are required' });
     }
 
-    console.log(`Received scrape request for ${platform}: ${keyword} in ${location} (Limit: ${limit || 15})`);
+    console.log(`[API] Scrape Request - Platform: ${platform}, Keyword: "${keyword}", Location: "${location}", Limit: ${limit}`);
 
     try {
         const jobs = await scrapeJobs(platform, keyword, location, limit || 15);
-        console.log(`Found ${jobs.length} jobs`);
+        console.log(`[API] Scrape Success - Found ${jobs.length} jobs`);
         res.json(jobs);
     } catch (error) {
-        console.error('API Error:', error);
+        console.error('[API] Scrape Failed:', error);
         res.status(500).json({ error: 'Failed to scrape jobs' });
     }
 });

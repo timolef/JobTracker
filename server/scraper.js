@@ -13,52 +13,56 @@ async function scrapeJobs(platform, keyword, location, limit = 15) {
     const page = await browser.newPage();
 
     await page.setViewport({ width: 1920, height: 1080 });
+    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
 
     let jobs = [];
     let pageNum = 0;
 
     try {
         if (platform === 'Indeed') {
-            const baseUrl = `https://fr.indeed.com/jobs?q=${encodeURIComponent(keyword)}&l=${encodeURIComponent(location)}`;
+            const isFrance = location.toLowerCase().includes('france') || location.toLowerCase().includes('paris') || location.toLowerCase().includes('lyon');
+            const domain = isFrance ? 'fr.indeed.com' : 'www.indeed.com';
+            const baseUrl = `https://${domain}/jobs?q=${encodeURIComponent(keyword)}&l=${encodeURIComponent(location)}`;
 
             while (jobs.length < limit) {
                 const startParam = pageNum * 10;
                 const url = pageNum === 0 ? baseUrl : `${baseUrl}&start=${startParam}`;
-                console.log(`[Indeed] Navigating to Page ${pageNum} (start=${startParam}). Current jobs: ${jobs.length}/${limit}`);
-
+                console.log(`[Indeed] Navigating to Page ${pageNum}: ${url}`);
                 await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+
+                // Try to close potential popups
+                try {
+                    const closeButtons = await page.$$('button[aria-label="close"], .icl-CloseButton, .popover-x-button-close');
+                    for (const btn of closeButtons) await btn.click();
+
+                    const cookieButton = await page.$('#onetrust-accept-btn-handler, #accept-recommended-btn-handler');
+                    if (cookieButton) await cookieButton.click();
+                } catch (e) { }
 
                 // Check for Cloudflare/Auth wall
                 const title = await page.title();
-                console.log(`[Indeed] Page Title: ${title}`);
+                const bodyLength = await page.evaluate(() => document.body.innerText.length);
+                console.log(`[Indeed] Title: "${title}" | Body Length: ${bodyLength}`);
 
                 // Wait for results
                 try {
-                    // Check if there are no results or if we are blocked
-                    const noResults = await page.$('.jobsearch-NoResult-Pane');
-                    if (noResults) {
-                        console.log('[Indeed] "No Result" pane detected. Stopping.');
-                        break;
-                    }
-                    await page.waitForSelector('.job_seen_beacon', { timeout: 10000 });
+                    await page.waitForSelector('.job_seen_beacon, .resultConfig, #mosaic-provider-jobcards, .tapItem, [id^="job_"]', { timeout: 15000 });
                 } catch (e) {
-                    console.log('[Indeed] Wait for .job_seen_beacon failed. Checking for captcha/login...');
-                    // Check for common error texts
+                    console.log('[Indeed] No job elements found after 15s.');
                     const bodyText = await page.evaluate(() => document.body.innerText);
                     if (bodyText.includes('hCaptcha') || bodyText.includes('security check')) {
                         console.log('[Indeed] BLOCKED by security check.');
                     }
-                    break;
                 }
 
                 const newJobs = await page.evaluate(() => {
-                    const items = document.querySelectorAll('.job_seen_beacon');
-                    return Array.from(items).map((item, id) => {
-                        // ... (selectors)
-                        const titleEl = item.querySelector('h2 span');
-                        const companyEl = item.querySelector('[data-testid="company-name"]');
-                        const locationEl = item.querySelector('[data-testid="text-location"]');
-                        const linkEl = item.closest('a') || item.querySelector('h2 a');
+                    // Try multiple possible selectors for Indeed
+                    const items = document.querySelectorAll('.job_seen_beacon, .tapItem, [id^="job_"]');
+                    return Array.from(items).map((item) => {
+                        const titleEl = item.querySelector('h2 span') || item.querySelector('h2 a') || item.querySelector('.jobTitle');
+                        const companyEl = item.querySelector('[data-testid="company-name"]') || item.querySelector('.companyName');
+                        const locationEl = item.querySelector('[data-testid="text-location"]') || item.querySelector('.companyLocation');
+                        const linkEl = item.querySelector('a[id^="job_"]') || item.closest('a') || item.querySelector('h2 a');
 
                         return {
                             id: null, // Will assign unique ID later
@@ -66,23 +70,36 @@ async function scrapeJobs(platform, keyword, location, limit = 15) {
                             company: companyEl ? companyEl.textContent.trim() : 'Unknown',
                             location: locationEl ? locationEl.textContent.trim() : 'Unknown',
                             type: 'Full-time',
-                            link: linkEl ? (linkEl.href.startsWith('/') ? 'https://fr.indeed.com' + linkEl.getAttribute('href') : linkEl.href) : '#',
+                            link: linkEl ? (linkEl.href.startsWith('/') ? window.location.origin + linkEl.getAttribute('href') : linkEl.href) : '#',
                             platform: 'Indeed',
                             posted: 'Recently'
                         }
                     });
                 });
 
-                console.log(`[Indeed] Found ${newJobs.length} jobs on this page.`);
+                // Deduplicate by link
+                const uniqueNewJobs = [];
+                const seenLinks = new Set();
 
-                if (newJobs.length === 0) {
-                    console.log('[Indeed] 0 jobs found on page. Stopping.');
+                newJobs.forEach(job => {
+                    if (job.link && job.link !== '#' && !seenLinks.has(job.link)) {
+                        seenLinks.add(job.link);
+                        uniqueNewJobs.push(job);
+                    }
+                });
+
+                console.log(`[Indeed] Found ${uniqueNewJobs.length} unique jobs on this page.`);
+
+                if (uniqueNewJobs.length === 0) {
+                    console.log('[Indeed] 0 unique jobs found on page. Taking diagnostic screenshot.');
+                    const debugPath = require('path').join(__dirname, 'uploads', `debug_indeed_empty.png`);
+                    await page.screenshot({ path: debugPath });
                     break;
                 }
 
-                // Add unique IDs to new jobs to avoid collisions
-                newJobs.forEach((job, index) => {
-                    job.id = `indeed-${pageNum}-${index}`;
+                // Add unique IDs
+                uniqueNewJobs.forEach((job, index) => {
+                    job.id = `indeed-${pageNum}-${index}-${Date.now()}`;
                     jobs.push(job);
                 });
 
@@ -158,7 +175,7 @@ async function scrapeJobs(platform, keyword, location, limit = 15) {
                 try {
                     await page.waitForSelector('.jobs-search__results-list li', { timeout: 10000 });
                 } catch (e) {
-                    console.log('LinkedIn: Wait failed');
+                    console.log(`LinkedIn: No results found at ${url}`);
                     break;
                 }
 
@@ -196,11 +213,23 @@ async function scrapeJobs(platform, keyword, location, limit = 15) {
 
     } catch (error) {
         console.error('Scraping Logic Error:', error);
+        try {
+            const debugPath = require('path').join(__dirname, 'uploads', `debug_${platform.replace(/\s+/g, '_')}.png`);
+            await page.screenshot({ path: debugPath });
+            console.log(`[Scraper] Debug screenshot saved to ${debugPath}`);
+        } catch (screenshotError) {
+            console.error('[Scraper] Failed to take debug screenshot:', screenshotError);
+        }
     } finally {
         await browser.close();
     }
 
     // Trim to exact limit
+    if (jobs.length === 0) {
+        console.warn(`[Scraper] FINAL RESULT: 0 jobs found for ${platform}.`);
+    } else {
+        console.log(`[Scraper] FINAL RESULT: Found ${jobs.length} jobs.`);
+    }
     return jobs.slice(0, limit);
 }
 
