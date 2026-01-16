@@ -17,20 +17,19 @@ const allowedOrigins = [
 ];
 
 app.use((req, res, next) => {
-    const origin = req.headers.origin;
+    // 1. CORS Headers - Direct Echo for debugging & stability
+    const origin = req.header('Origin');
 
-    // Check if origin is allowed
-    if (origin && (allowedOrigins.includes(origin) || origin.includes('vercel.app') || origin.includes('localhost'))) {
+    if (origin) {
         res.setHeader('Access-Control-Allow-Origin', origin);
-    } else if (!origin) {
-        // Allow non-browser requests
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
+    } else {
         res.setHeader('Access-Control-Allow-Origin', '*');
     }
 
-    // CORS Headers
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, Cache-Control, Pragma, X-Requested-With');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Max-Age', '86400');
     res.setHeader('Vary', 'Origin');
 
     // 2. NO-CACHE Headers (Requested by user)
@@ -39,8 +38,9 @@ app.use((req, res, next) => {
     res.setHeader('Expires', '0');
     res.setHeader('Surrogate-Control', 'no-store');
 
-    // Handle Preflight
+    // Handle Preflight immediately
     if (req.method === 'OPTIONS') {
+        console.log(`[CORS OPTIONS] Echoing origin: ${origin}`);
         return res.status(200).end();
     }
 
