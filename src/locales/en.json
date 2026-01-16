@@ -51,5 +51,19 @@
         "pro_plan": "Pro Plan",
         "upgrade_now": "Upgrade Now",
         "current_plan": "Current Plan"
+    },
+    "applications": {
+        "title": "Applications",
+        "subtitle": "Manage and track your job applications.",
+        "searchPlaceholder": "Search companies or roles...",
+        "allStatuses": "All Statuses",
+        "add_app": "Add Application"
+    },
+    "documents": {
+        "title": "Documents",
+        "subtitle": "Manage your CVs and Cover Letters.",
+        "ai_gen": "AI Gen",
+        "write": "Write",
+        "upload": "Upload"
     }
 }

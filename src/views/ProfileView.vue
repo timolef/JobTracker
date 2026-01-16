@@ -92,11 +92,11 @@ async function handleCancelSubscription() {
           </div>
         </div>
 
-        <div class="flex gap-2 pb-2">
-           <Button variant="outline" class="rounded-xl">
+        <div class="flex flex-col sm:flex-row gap-2 pb-2 w-full sm:w-auto">
+           <Button variant="outline" class="rounded-xl w-full sm:w-auto">
               <Settings class="h-4 w-4 mr-2" /> Settings
            </Button>
-           <Button variant="destructive" class="rounded-xl shadow-lg shadow-destructive/20" @click="auth.logout">
+           <Button variant="destructive" class="rounded-xl shadow-lg shadow-destructive/20 w-full sm:w-auto" @click="auth.logout">
               <LogOut class="h-4 w-4 mr-2" /> Logout
            </Button>
         </div>

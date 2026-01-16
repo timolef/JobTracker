@@ -3,6 +3,9 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDocumentsStore } from '@/stores/documents'
 import { useAuthStore } from '@/stores/auth'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 import { FileText, File, Plus, Download, Trash2, Upload, PenTool, Eye, Sparkles, Loader2, Lock } from 'lucide-vue-next'
 import Button from '@/components/ui/Button.vue'
 import Dialog from '@/components/ui/Dialog.vue'
@@ -100,26 +103,26 @@ function formatDate(isoString) {
 
 <template>
   <div class="space-y-6">
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div>
-        <h2 class="text-3xl font-bold tracking-tight">Documents</h2>
-        <p class="text-muted-foreground">Manage your CVs and Cover Letters.</p>
+        <h2 class="text-3xl font-bold tracking-tight">{{ t('documents.title') }}</h2>
+        <p class="text-muted-foreground mt-1">{{ t('documents.subtitle') }}</p>
       </div>
-      <div class="flex gap-2">
+      <div class="flex flex-wrap gap-2">
          <Button 
             variant="outline" 
-            class="border-primary/50 text-primary hover:bg-primary/10 relative" 
+            class="flex-1 sm:flex-initial border-primary/50 text-primary hover:bg-primary/10 relative h-9 px-3" 
             @click="authStore.isPremium ? (isAIModalOpen = true) : router.push('/pricing')"
          >
             <Sparkles class="mr-2 h-4 w-4" /> 
-            AI Generator
+            {{ t('documents.ai_gen') }}
             <Lock v-if="!authStore.isPremium" class="absolute -top-1 -right-1 h-3 w-3 text-orange-500 bg-background rounded-full p-0.5 border" />
          </Button>
-         <Button variant="outline" @click="isEditorOpen = true">
-            <PenTool class="mr-2 h-4 w-4" /> Write Letter
+         <Button variant="outline" class="flex-1 sm:flex-initial h-9 px-3" @click="isEditorOpen = true">
+            <PenTool class="mr-2 h-4 w-4" /> {{ t('documents.write') }}
          </Button>
-         <Button @click="isUploadOpen = true">
-            <Upload class="mr-2 h-4 w-4" /> Upload File
+         <Button class="flex-1 sm:flex-initial h-9 px-3" @click="isUploadOpen = true">
+            <Upload class="mr-2 h-4 w-4" /> {{ t('documents.upload') }}
          </Button>
       </div>
     </div>

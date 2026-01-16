@@ -257,7 +257,7 @@ const doughnutOptions = {
     <AdBanner v-if="!authStore.isPremium" type="horizontal" class="mb-8" />
 
     <!-- Stats Grid -->
-    <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+    <div class="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
       <Card v-for="stat in stats" :key="stat.title" class="glass hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 border-none">
         <CardContent class="p-6">
           <div class="flex items-center justify-between space-y-0 pb-2">
@@ -272,7 +272,7 @@ const doughnutOptions = {
     </div>
 
     <!-- Charts and Reminders -->
-    <div class="grid gap-6 md:grid-cols-3">
+    <div class="grid gap-6 grid-cols-1 md:grid-cols-3">
       <Card class="glass border-none md:col-span-1">
         <CardHeader class="flex flex-row items-center justify-between space-y-0">
           <CardTitle class="text-lg font-semibold flex items-center gap-2">

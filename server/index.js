@@ -6,7 +6,7 @@ const authRoutes = require('./auth');
 
 // Express Initialization
 const app = express();
-let PORT = process.env.PORT || 8080;
+let PORT = process.env.PORT || 3000;
 
 // Railway/Cloud specific port fixer: 3306 is often injected as MySQL port and causes 502 conflicts
 if (PORT === "3306" || PORT === 3306) {

@@ -45,11 +45,25 @@
         "search": "Rechercher..."
     },
     "pricing": {
-        "title": "Choisissez votre plan",
+        "title": "Choisissez votre forfait",
         "subtitle": "Libérez votre potentiel avec JobTracker Pro",
         "free_plan": "Plan Gratuit",
         "pro_plan": "Plan Pro",
-        "upgrade_now": "Améliorer",
+        "upgrade_now": "Passer à Pro",
         "current_plan": "Plan Actuel"
+    },
+    "applications": {
+        "title": "Candidatures",
+        "subtitle": "Gérez et suivez vos candidatures.",
+        "searchPlaceholder": "Chercher une entreprise ou un poste...",
+        "allStatuses": "Tous les statuts",
+        "add_app": "Ajouter une candidature"
+    },
+    "documents": {
+        "title": "Documents",
+        "subtitle": "Gérez vos CVs et Lettres de Motivation.",
+        "ai_gen": "IA Géné",
+        "write": "Écrire",
+        "upload": "Charger"
     }
 }

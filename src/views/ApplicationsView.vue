@@ -12,6 +12,9 @@ import Card from '@/components/ui/Card.vue'
 import CardContent from '@/components/ui/CardContent.vue'
 import AdBanner from '@/components/AdBanner.vue'
 import { useAuthStore } from '@/stores/auth'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const appStore = useApplicationStore()
 const docStore = useDocumentsStore()
@@ -127,11 +130,11 @@ function needsFollowUp(app) {
   <div class="space-y-6">
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div>
-        <h2 class="text-3xl font-bold tracking-tight">Applications</h2>
-        <p class="text-muted-foreground mt-1">Manage and track your job applications.</p>
+        <h2 class="text-3xl font-bold tracking-tight">{{ t('applications.title') }}</h2>
+        <p class="text-muted-foreground mt-1">{{ t('applications.subtitle') }}</p>
       </div>
       <Button class="rounded-xl shadow-lg shadow-primary/20" @click="openAddDialog">
-        <Plus class="h-4 w-4 mr-2" /> Add Application
+        <Plus class="h-4 w-4 mr-2" /> {{ t('applications.add_app') }}
       </Button>
     </div>
 
@@ -139,13 +142,13 @@ function needsFollowUp(app) {
     <AdBanner v-if="!authStore.isPremium" type="horizontal" />
 
     <!-- Filters -->
-    <div class="flex items-center gap-4">
+    <div class="flex flex-col sm:flex-row sm:items-center gap-4">
       <div class="relative w-full max-w-sm">
         <Search class="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input type="search" placeholder="Search companies or roles..." class="pl-8" v-model="searchQuery" />
+        <Input type="search" :placeholder="t('applications.searchPlaceholder')" class="pl-8 w-full" v-model="searchQuery" />
       </div>
-      <select v-model="statusFilter" class="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-        <option value="All">All Statuses</option>
+      <select v-model="statusFilter" class="w-full sm:w-auto h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+        <option value="All">{{ t('applications.allStatuses') }}</option>
         <option v-for="s in statuses" :key="s" :value="s">{{ s }}</option>
       </select>
     </div>
