@@ -1,7 +1,9 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useDocumentsStore } from '@/stores/documents'
-import { FileText, File, Plus, Download, Trash2, Upload, PenTool, Eye, Sparkles, Loader2 } from 'lucide-vue-next'
+import { useAuthStore } from '@/stores/auth'
+import { FileText, File, Plus, Download, Trash2, Upload, PenTool, Eye, Sparkles, Loader2, Lock } from 'lucide-vue-next'
 import Button from '@/components/ui/Button.vue'
 import Dialog from '@/components/ui/Dialog.vue'
 import Input from '@/components/ui/Input.vue'
@@ -10,6 +12,8 @@ import Card from '@/components/ui/Card.vue'
 import CardContent from '@/components/ui/CardContent.vue'
 
 const docStore = useDocumentsStore()
+const authStore = useAuthStore()
+const router = useRouter()
 const isUploadOpen = ref(false)
 const isEditorOpen = ref(false)
 const isAIModalOpen = ref(false)
@@ -101,8 +105,14 @@ function formatDate(isoString) {
         <p class="text-muted-foreground">Manage your CVs and Cover Letters.</p>
       </div>
       <div class="flex gap-2">
-         <Button variant="outline" class="border-primary/50 text-primary hover:bg-primary/10" @click="isAIModalOpen = true">
-            <Sparkles class="mr-2 h-4 w-4" /> AI Generator
+         <Button 
+            variant="outline" 
+            class="border-primary/50 text-primary hover:bg-primary/10 relative" 
+            @click="authStore.isPremium ? (isAIModalOpen = true) : router.push('/pricing')"
+         >
+            <Sparkles class="mr-2 h-4 w-4" /> 
+            AI Generator
+            <Lock v-if="!authStore.isPremium" class="absolute -top-1 -right-1 h-3 w-3 text-orange-500 bg-background rounded-full p-0.5 border" />
          </Button>
          <Button variant="outline" @click="isEditorOpen = true">
             <PenTool class="mr-2 h-4 w-4" /> Write Letter

@@ -125,5 +125,29 @@ export const useApplicationStore = defineStore('applications', () => {
         }
     }
 
-    return { applications, isLoading, stats, fetchApplications, addApplication, updateStatus, deleteApplication }
+    async function updateApplication(id, updates) {
+        const token = getToken()
+        if (!token) return;
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/applications/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(updates)
+            })
+
+            if (response.ok) {
+                await fetchApplications() // Full refresh to get joined names
+                return true
+            }
+        } catch (error) {
+            console.error('Failed to update application:', error)
+            throw error
+        }
+    }
+
+    return { applications, isLoading, stats, fetchApplications, addApplication, updateStatus, updateApplication, deleteApplication }
 })

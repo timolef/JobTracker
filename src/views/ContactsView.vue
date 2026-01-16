@@ -21,13 +21,9 @@ const isEditing = ref(false)
 const currentId = ref(null)
 
 const form = ref({
-  name: '',
-  company: '',
-  role: '',
-  email: '',
-  phone: '',
   linkedin_url: '',
-  notes: ''
+  notes: '',
+  follow_up_date: null
 })
 
 const filteredContacts = computed(() => {
@@ -40,14 +36,26 @@ const filteredContacts = computed(() => {
 function openAddModal() {
   isEditing.value = false
   currentId.value = null
-  form.value = { name: '', company: '', role: '', email: '', phone: '', linkedin_url: '', notes: '' }
+  form.value = { 
+    name: '', 
+    company: '', 
+    role: '', 
+    email: '', 
+    phone: '', 
+    linkedin_url: '', 
+    notes: '',
+    follow_up_date: null
+  }
   isDialogOpen.value = true
 }
 
 function openEditModal(contact) {
   isEditing.value = true
   currentId.value = contact.id
-  form.value = { ...contact }
+  form.value = { 
+    ...contact,
+    follow_up_date: contact.follow_up_date ? new Date(contact.follow_up_date).toISOString().split('T')[0] : null
+  }
   isDialogOpen.value = true
 }
 
@@ -128,8 +136,14 @@ function formatDate(date) {
             </div>
           </div>
 
-          <div class="mt-4 pt-4 border-t flex items-center justify-between text-[10px] text-muted-foreground uppercase tracking-wider">
-            <span>Last Contact: {{ formatDate(contact.last_contact_date) }}</span>
+          <div class="mt-4 pt-4 border-t flex flex-col gap-2 text-[10px] text-muted-foreground uppercase tracking-wider">
+            <div class="flex justify-between">
+              <span>Last Contact: {{ formatDate(contact.last_contact_date) }}</span>
+            </div>
+            <div v-if="contact.follow_up_date" class="flex items-center gap-1.5 text-orange-500 font-bold">
+              <Calendar class="h-3 w-3" />
+              <span>Next Follow-up: {{ formatDate(contact.follow_up_date) }}</span>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -172,6 +186,11 @@ function formatDate(date) {
           <div class="space-y-2">
              <Label for="linkedin">LinkedIn URL</Label>
              <Input id="linkedin" v-model="form.linkedin_url" placeholder="https://linkedin.com/in/..." />
+          </div>
+
+          <div class="space-y-2">
+             <Label for="follow_up_date">Follow-up Reminder Date</Label>
+             <Input id="follow_up_date" type="date" v-model="form.follow_up_date" />
           </div>
 
           <div class="space-y-2">

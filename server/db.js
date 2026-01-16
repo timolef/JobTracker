@@ -23,6 +23,7 @@ async function initDB() {
         id INT AUTO_INCREMENT PRIMARY KEY,
         email VARCHAR(255) NOT NULL UNIQUE,
         password_hash VARCHAR(255) NOT NULL,
+        is_premium BOOLEAN DEFAULT FALSE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
@@ -38,11 +39,42 @@ async function initDB() {
         status VARCHAR(50) DEFAULT 'Applied',
         link TEXT,
         notes TEXT,
+        cv_id INT,
+        cover_letter_id INT,
+        follow_up_date DATE,
         date_applied TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (cv_id) REFERENCES documents(id) ON DELETE SET NULL,
+        FOREIGN KEY (cover_letter_id) REFERENCES documents(id) ON DELETE SET NULL
       )
     `);
+
+    // Ensure columns exist for existing databases
+    try {
+      await connection.query('ALTER TABLE users ADD COLUMN is_premium BOOLEAN DEFAULT FALSE');
+    } catch (e) { /* ignore if column exists */ }
+
+    try {
+      await connection.query('ALTER TABLE applications ADD COLUMN cv_id INT');
+    } catch (e) { /* ignore if column exists */ }
+    try {
+      await connection.query('ALTER TABLE applications ADD COLUMN cover_letter_id INT');
+    } catch (e) { /* ignore if column exists */ }
+    try {
+      await connection.query('ALTER TABLE applications ADD COLUMN follow_up_date DATE');
+    } catch (e) { /* ignore if column exists */ }
+    try {
+      await connection.query('ALTER TABLE applications ADD FOREIGN KEY (cv_id) REFERENCES documents(id) ON DELETE SET NULL');
+    } catch (e) { /* ignore if key exists */ }
+    try {
+      await connection.query('ALTER TABLE applications ADD FOREIGN KEY (cover_letter_id) REFERENCES documents(id) ON DELETE SET NULL');
+    } catch (e) { /* ignore if key exists */ }
+
+    // Ensure contacts column exists
+    try {
+      await connection.query('ALTER TABLE contacts ADD COLUMN follow_up_date DATE');
+    } catch (e) { /* ignore if column exists */ }
 
     // In a real app we'd have an 'applications' table too, but for MVP we might stick to local storage for data 
     // or we'd need to migrate that too. The prompt specifically asked for "inscription et connexion sécurisé". 
@@ -73,6 +105,7 @@ async function initDB() {
         linkedin_url VARCHAR(255),
         notes TEXT,
         last_contact_date TIMESTAMP NULL,
+        follow_up_date DATE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
       )

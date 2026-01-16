@@ -1,7 +1,8 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useApplicationStore } from '@/stores/applications'
-import { Plus, MoreVertical, Building2, MapPin, ExternalLink, Eye } from 'lucide-vue-next'
+import { useDocumentsStore } from '@/stores/documents'
+import { Plus, MoreVertical, Building2, MapPin, ExternalLink, Eye, File, FileText } from 'lucide-vue-next'
 import Button from '@/components/ui/Button.vue'
 import Badge from '@/components/ui/Badge.vue'
 import Card from '@/components/ui/Card.vue'
@@ -10,9 +11,11 @@ import Dialog from '@/components/ui/Dialog.vue'
 import Label from '@/components/ui/Label.vue'
 
 const appStore = useApplicationStore()
+const docStore = useDocumentsStore()
 
 onMounted(() => {
   appStore.fetchApplications()
+  docStore.fetchDocuments()
 })
 
 const columns = [
@@ -59,13 +62,26 @@ async function onDrop(event, newStatus) {
   draggedApp.value = null
 }
 
+const cvs = computed(() => docStore.documents.filter(d => d.type === 'CV'))
+const coverLetters = computed(() => docStore.documents.filter(d => d.type === 'CoverLetter'))
+
 // Details Modal Integration
 const isDetailsOpen = ref(false)
 const selectedApp = ref(null)
 
 function openDetails(app) {
-  selectedApp.value = app
+  selectedApp.value = { ...app } // Copy to avoid direct mutation
   isDetailsOpen.value = true
+}
+
+async function handleSaveDetails() {
+  if (!selectedApp.value) return
+  await appStore.updateApplication(selectedApp.value.id, {
+    cv_id: selectedApp.value.cv_id,
+    cover_letter_id: selectedApp.value.cover_letter_id,
+    notes: selectedApp.value.notes
+  })
+  isDetailsOpen.value = false
 }
 
 function formatDate(isoString) {
@@ -139,10 +155,13 @@ function formatDate(isoString) {
                   <MapPin class="h-3 w-3" />
                   <span>{{ app.location || 'Remote' }}</span>
                 </div>
-                <!-- Optional Link -->
-                <a v-if="app.link" :href="app.link" target="_blank" @click.stop class="text-primary hover:underline">
-                  <ExternalLink class="h-3 w-3" />
-                </a>
+                <div class="flex gap-1">
+                  <File v-if="app.cv_id" class="h-3 w-3 text-blue-500" :title="app.cv_name" />
+                  <FileText v-if="app.cover_letter_id" class="h-3 w-3 text-green-500" :title="app.cover_letter_name" />
+                  <a v-if="app.link" :href="app.link" target="_blank" @click.stop class="text-primary hover:underline">
+                    <ExternalLink class="h-3 w-3" />
+                  </a>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -177,18 +196,37 @@ function formatDate(isoString) {
           </div>
         </div>
 
-        <div v-if="selectedApp.link">
-           <Label class="text-xs text-muted-foreground">Link</Label>
-           <a :href="selectedApp.link" target="_blank" class="block text-sm text-blue-500 hover:underline truncate">{{ selectedApp.link }}</a>
+        <div class="space-y-4 pt-2 border-t border-border/50">
+           <div class="grid grid-cols-2 gap-4">
+              <div class="space-y-2">
+                 <Label class="text-xs">CV Used</Label>
+                 <select v-model="selectedApp.cv_id" class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                    <option :value="null">None</option>
+                    <option v-for="cv in cvs" :key="cv.id" :value="cv.id">{{ cv.name }}</option>
+                 </select>
+              </div>
+              <div class="space-y-2">
+                 <Label class="text-xs">Cover Letter Used</Label>
+                 <select v-model="selectedApp.cover_letter_id" class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                    <option :value="null">None</option>
+                    <option v-for="cl in coverLetters" :key="cl.id" :value="cl.id">{{ cl.name }}</option>
+                 </select>
+              </div>
+           </div>
+
+           <div class="space-y-2">
+              <Label class="text-xs">Notes</Label>
+              <textarea 
+                v-model="selectedApp.notes" 
+                class="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                placeholder="Add some notes..."
+              ></textarea>
+           </div>
         </div>
 
-        <div v-if="selectedApp.notes">
-           <Label class="text-xs text-muted-foreground">Notes</Label>
-           <p class="text-sm bg-muted/50 p-3 rounded-md whitespace-pre-wrap">{{ selectedApp.notes }}</p>
-        </div>
-
-        <div class="flex justify-end">
-           <Button variant="outline" @click="isDetailsOpen = false">Close</Button>
+        <div class="flex justify-end gap-2 mt-6">
+           <Button variant="ghost" @click="isDetailsOpen = false">Cancel</Button>
+           <Button @click="handleSaveDetails">Save Changes</Button>
         </div>
       </div>
     </Dialog>

@@ -7,7 +7,14 @@ const router = express.Router();
 router.get('/', authenticateToken, async (req, res) => {
     try {
         const [rows] = await pool.query(
-            'SELECT * FROM applications WHERE user_id = ? ORDER BY date_applied DESC',
+            `SELECT a.*, 
+                    d1.name as cv_name, 
+                    d2.name as cover_letter_name 
+             FROM applications a
+             LEFT JOIN documents d1 ON a.cv_id = d1.id
+             LEFT JOIN documents d2 ON a.cover_letter_id = d2.id
+             WHERE a.user_id = ? 
+             ORDER BY a.date_applied DESC`,
             [req.user.id]
         );
         res.json(rows);
@@ -19,7 +26,7 @@ router.get('/', authenticateToken, async (req, res) => {
 
 // POST new application
 router.post('/', authenticateToken, async (req, res) => {
-    const { company, position, location, type, status, link, notes } = req.body;
+    const { company, position, location, type, status, link, notes, cv_id, cover_letter_id, follow_up_date } = req.body;
 
     // Basic validation
     if (!company || !position) {
@@ -28,9 +35,9 @@ router.post('/', authenticateToken, async (req, res) => {
 
     try {
         const [result] = await pool.query(
-            `INSERT INTO applications (user_id, company, position, location, type, status, link, notes) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-            [req.user.id, company, position, location, type, status || 'Applied', link, notes]
+            `INSERT INTO applications (user_id, company, position, location, type, status, link, notes, cv_id, cover_letter_id, follow_up_date) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [req.user.id, company, position, location, type, status || 'Applied', link, notes, cv_id || null, cover_letter_id || null, follow_up_date || null]
         );
 
         // Fetch the newly created item to return it
@@ -46,7 +53,7 @@ router.post('/', authenticateToken, async (req, res) => {
 router.put('/:id', authenticateToken, async (req, res) => {
     const appId = req.params.id;
     const fields = req.body;
-    const allowedFields = ['company', 'position', 'location', 'type', 'status', 'link', 'notes'];
+    const allowedFields = ['company', 'position', 'location', 'type', 'status', 'link', 'notes', 'cv_id', 'cover_letter_id', 'follow_up_date'];
 
     try {
         // Ensure the application belongs to the user

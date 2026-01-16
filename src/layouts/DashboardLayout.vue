@@ -1,6 +1,6 @@
 <script setup>
-import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { 
   LayoutDashboard, 
@@ -11,21 +11,32 @@ import {
   FileText,
   Calendar,
   Sun,
-  Moon
+  Moon,
+  Lock,
+  Sparkles
 } from 'lucide-vue-next'
 
 const route = useRoute()
 const auth = useAuthStore()
 
 const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Board', href: '/kanban', icon: Briefcase },
-  { name: 'Contacts', href: '/contacts', icon: User },
-  { name: 'Interviews', href: '/interviews', icon: Calendar },
-  { name: 'Applications', href: '/applications', icon: Briefcase },
-  { name: 'Documents', href: '/documents', icon: FileText },
-  { name: 'Find Jobs', href: '/search', icon: Search },
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, premium: false },
+  { name: 'Board', href: '/kanban', icon: Briefcase, premium: true },
+  { name: 'Contacts', href: '/contacts', icon: User, premium: true },
+  { name: 'Interviews', href: '/interviews', icon: Calendar, premium: true },
+  { name: 'Applications', href: '/applications', icon: Briefcase, premium: false },
+  { name: 'Documents', href: '/documents', icon: FileText, premium: false },
+  { name: 'Find Jobs', href: '/search', icon: Search, premium: false },
 ]
+
+const router = useRouter()
+
+function handleNavClick(item, e) {
+  if (item.premium && !auth.isPremium) {
+    e.preventDefault()
+    router.push('/pricing')
+  }
+}
 
 const currentRoute = computed(() => route.path)
 
@@ -43,7 +54,6 @@ function toggleTheme() {
 }
 
 // Init theme
-import { onMounted, ref } from 'vue'
 
 onMounted(() => {
   const savedTheme = localStorage.getItem('theme')
@@ -66,23 +76,39 @@ onMounted(() => {
     <!-- Sidebar -->
     <aside class="w-64 border-r md:flex flex-col hidden glass z-20 transition-all duration-500">
       <div class="p-6">
-        <h1 class="text-2xl font-bold tracking-tight bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">JobTracker</h1>
+        <div class="flex items-center gap-2">
+          <h1 class="text-2xl font-bold tracking-tight bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">JobTracker</h1>
+          <span v-if="auth.isPremium" class="bg-primary/10 text-primary text-[10px] font-bold px-1.5 py-0.5 rounded border border-primary/20 shadow-sm animate-pulse">PRO</span>
+        </div>
       </div>
       
       <nav class="flex-1 px-4 space-y-2">
         <router-link 
           v-for="item in navigation" 
           :key="item.name" 
-          :to="item.href"
+          :to="item.premium && !auth.isPremium ? '/pricing' : item.href"
           class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-300 group"
-          :class="currentRoute === item.href 
-            ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20 scale-[1.02]' 
-            : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground hover:translate-x-1'"
+          :class="[
+            currentRoute === item.href 
+              ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20 scale-[1.02]' 
+              : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground hover:translate-x-1',
+            item.premium && !auth.isPremium ? 'opacity-80' : ''
+          ]"
         >
-          <component :is="item.icon" class="h-4 w-4 transition-transform group-hover:scale-110" />
-          {{ item.name }}
+          <div class="relative">
+            <component :is="item.icon" class="h-4 w-4 transition-transform group-hover:scale-110" />
+            <Lock v-if="item.premium && !auth.isPremium" class="absolute -top-1.5 -right-1.5 h-2.5 w-2.5 text-orange-500" />
+          </div>
+          <span class="flex-1">{{ item.name }}</span>
+          <span v-if="item.premium && !auth.isPremium" class="text-[9px] bg-orange-500/10 text-orange-500 px-1.5 py-0.5 rounded-full font-bold uppercase tracking-tighter">Pro</span>
         </router-link>
       </nav>
+
+      <div v-if="!auth.isPremium" class="px-4 mb-4">
+        <router-link to="/pricing" class="flex items-center justify-center gap-2 px-3 py-3 rounded-xl bg-gradient-to-r from-primary to-purple-600 text-white text-xs font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all">
+          <Sparkles class="h-3.5 w-3.5" /> Upgrade to Pro
+        </router-link>
+      </div>
 
       <div class="px-4 py-4">
         <div class="flex items-center justify-between p-2 rounded-xl bg-muted/40 backdrop-blur-sm border border-border/50">
@@ -102,18 +128,21 @@ onMounted(() => {
       </div>
 
       <div class="p-4 border-t border-border/50">
-        <div class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-accent/30 transition-colors cursor-pointer group">
+        <router-link to="/profile" class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-accent/30 transition-colors cursor-pointer group">
           <div class="h-9 w-9 rounded-full bg-primary/20 flex items-center justify-center text-primary group-hover:scale-105 transition-transform">
             <User class="h-4.5 w-4.5" />
           </div>
           <div class="flex-1 overflow-hidden">
-            <p class="text-sm font-semibold truncate">{{ auth.user?.name || 'User' }}</p>
+            <div class="flex items-center gap-2">
+              <p class="text-sm font-semibold truncate">{{ auth.user?.name || 'User' }}</p>
+              <span v-if="auth.isPremium" class="bg-primary text-white text-[9px] font-black px-1 rounded-sm shadow-sm">PRO</span>
+            </div>
             <p class="text-[11px] text-muted-foreground truncate">{{ auth.user?.email }}</p>
           </div>
-          <button @click="auth.logout" class="text-muted-foreground hover:text-destructive transition-all">
+          <button @click.prevent.stop="auth.logout" class="text-muted-foreground hover:text-destructive transition-all">
             <LogOut class="h-4 w-4" />
           </button>
-        </div>
+        </router-link>
       </div>
     </aside>
 

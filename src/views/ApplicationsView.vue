@@ -1,7 +1,8 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useApplicationStore } from '@/stores/applications'
-import { Plus, Search, MapPin, Building2, Calendar, Trash2 } from 'lucide-vue-next'
+import { useDocumentsStore } from '@/stores/documents'
+import { Plus, Search, MapPin, Building2, Calendar, Trash2, FileText, File, Eye } from 'lucide-vue-next'
 import Button from '@/components/ui/Button.vue'
 import Input from '@/components/ui/Input.vue'
 import Label from '@/components/ui/Label.vue'
@@ -11,9 +12,11 @@ import Card from '@/components/ui/Card.vue'
 import CardContent from '@/components/ui/CardContent.vue'
 
 const appStore = useApplicationStore()
+const docStore = useDocumentsStore()
 
 onMounted(() => {
   appStore.fetchApplications()
+  docStore.fetchDocuments()
 })
 
 const searchQuery = ref('')
@@ -29,8 +32,14 @@ const form = ref({
   type: 'Full-time',
   status: 'To Apply',
   link: '',
-  notes: ''
+  notes: '',
+  cv_id: null,
+  cover_letter_id: null,
+  follow_up_date: null
 })
+
+const cvs = computed(() => docStore.documents.filter(d => d.type === 'CV'))
+const coverLetters = computed(() => docStore.documents.filter(d => d.type === 'CoverLetter'))
 
 const statuses = ['To Apply', 'Applied', 'Interview', 'Refusal', 'Offer']
 const types = ['Full-time', 'Part-time', 'Internship', 'Freelance', 'Apprenticeship']
@@ -54,7 +63,10 @@ function openAddModal() {
     type: 'Full-time',
     status: 'To Apply',
     link: '',
-    notes: ''
+    notes: '',
+    cv_id: null,
+    cover_letter_id: null,
+    follow_up_date: null
   }
   isDialogOpen.value = true
 }
@@ -62,7 +74,10 @@ function openAddModal() {
 function openEditModal(app) {
   isEditing.value = true
   currentId.value = app.id
-  form.value = { ...app }
+  form.value = { 
+    ...app,
+    follow_up_date: app.follow_up_date ? new Date(app.follow_up_date).toISOString().split('T')[0] : null
+  }
   isDialogOpen.value = true
 }
 
@@ -75,14 +90,7 @@ function deleteApplication(e, id) {
 
 function saveApplication() {
   if (isEditing.value) {
-    appStore.updateStatus(currentId.value, form.value.status)
-    // Update other fields manual update logic if store supports it, 
-    // for MVP simplified store only had updateStatus, so I'll quick-fix store or overwrite here
-    // Let's manually update the object in store directly since store handles it by ref
-    const index = appStore.applications.findIndex(a => a.id === currentId.value)
-    if (index !== -1) {
-       appStore.applications[index] = { ...appStore.applications[index], ...form.value, dateChanged: new Date().toISOString() }
-    }
+    appStore.updateApplication(currentId.value, form.value)
   } else {
     appStore.addApplication({ ...form.value })
   }
@@ -106,7 +114,7 @@ function formatDate(isoString) {
 
 function needsFollowUp(app) {
   if (app.status !== 'Applied' && app.status !== 'Interview') return false
-  const date = new Date(app.dateChanged)
+  const date = new Date(app.updated_at || app.date_applied)
   const daysDiff = (new Date() - date) / (1000 * 60 * 60 * 24)
   return daysDiff > 7 // 7 days threshold
 }
@@ -170,7 +178,29 @@ function needsFollowUp(app) {
              </div>
              <div class="flex items-center gap-2">
                 <Calendar class="h-4 w-4" />
-                <span>{{ formatDate(app.dateChanged) }}</span>
+                <span>{{ formatDate(app.date_applied) }}</span>
+             </div>
+             <div v-if="app.follow_up_date" class="flex items-center gap-2 text-orange-500 font-medium">
+                <Calendar class="h-4 w-4" />
+                <span>Follow-up: {{ formatDate(app.follow_up_date) }}</span>
+             </div>
+             <div v-if="app.cv_name || app.cover_letter_name" class="flex flex-wrap gap-2 mt-3 pt-3 border-t border-border/50">
+                <div v-if="app.cv_name" class="flex items-center gap-1">
+                   <Badge variant="outline" class="text-[10px] py-0 h-5 bg-blue-50/50">
+                      <File class="h-2.5 w-2.5 mr-1" /> {{ app.cv_name }}
+                   </Badge>
+                   <Button variant="ghost" size="icon" class="h-5 w-5 hover:bg-blue-100/50" @click.stop="docStore.viewDocument(app.cv_id)">
+                      <Eye class="h-3 w-3" />
+                   </Button>
+                </div>
+                <div v-if="app.cover_letter_name" class="flex items-center gap-1">
+                   <Badge variant="outline" class="text-[10px] py-0 h-5 bg-green-50/50">
+                      <FileText class="h-2.5 w-2.5 mr-1" /> {{ app.cover_letter_name }}
+                   </Badge>
+                   <Button variant="ghost" size="icon" class="h-5 w-5 hover:bg-green-100/50" @click.stop="docStore.viewDocument(app.cover_letter_id)">
+                      <Eye class="h-3 w-3" />
+                   </Button>
+                </div>
              </div>
           </div>
         </CardContent>
@@ -218,6 +248,29 @@ function needsFollowUp(app) {
           <div class="space-y-2">
              <Label for="link">Link</Label>
              <Input id="link" v-model="form.link" placeholder="https://..." />
+          </div>
+
+          <div class="space-y-2">
+             <Label for="follow_up_date">Follow-up Reminder Date</Label>
+             <Input id="follow_up_date" type="date" v-model="form.follow_up_date" />
+             <p class="text-[10px] text-muted-foreground">Pick a date to be reminded on the dashboard.</p>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+             <div class="space-y-2">
+                <Label>CV Linked</Label>
+                <select v-model="form.cv_id" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                   <option :value="null">None</option>
+                   <option v-for="cv in cvs" :key="cv.id" :value="cv.id">{{ cv.name }}</option>
+                </select>
+             </div>
+             <div class="space-y-2">
+                <Label>Cover Letter Linked</Label>
+                <select v-model="form.cover_letter_id" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                   <option :value="null">None</option>
+                   <option v-for="cl in coverLetters" :key="cl.id" :value="cl.id">{{ cl.name }}</option>
+                </select>
+             </div>
           </div>
 
           <div class="space-y-2">

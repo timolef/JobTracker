@@ -20,11 +20,11 @@ router.get('/', async (req, res) => {
 
 // POST new contact
 router.post('/', async (req, res) => {
-    const { name, company, role, email, phone, linkedin_url, notes } = req.body;
+    const { name, company, role, email, phone, linkedin_url, notes, follow_up_date } = req.body;
     try {
         const [result] = await pool.query(
-            'INSERT INTO contacts (user_id, name, company, role, email, phone, linkedin_url, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-            [req.user.id, name, company, role, email, phone, linkedin_url, notes]
+            'INSERT INTO contacts (user_id, name, company, role, email, phone, linkedin_url, notes, follow_up_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [req.user.id, name, company, role, email, phone, linkedin_url, notes, follow_up_date || null]
         );
         res.status(201).json({ id: result.insertId, ...req.body });
     } catch (err) {
@@ -34,11 +34,11 @@ router.post('/', async (req, res) => {
 
 // PUT update contact
 router.put('/:id', async (req, res) => {
-    const { name, company, role, email, phone, linkedin_url, notes, last_contact_date } = req.body;
+    const { name, company, role, email, phone, linkedin_url, notes, last_contact_date, follow_up_date } = req.body;
     try {
         await pool.query(
-            'UPDATE contacts SET name=?, company=?, role=?, email=?, phone=?, linkedin_url=?, notes=?, last_contact_date=? WHERE id=? AND user_id=?',
-            [name, company, role, email, phone, linkedin_url, notes, last_contact_date, req.params.id, req.user.id]
+            'UPDATE contacts SET name=?, company=?, role=?, email=?, phone=?, linkedin_url=?, notes=?, last_contact_date=?, follow_up_date=? WHERE id=? AND user_id=?',
+            [name, company, role, email, phone, linkedin_url, notes, last_contact_date, follow_up_date, req.params.id, req.user.id]
         );
         res.json({ message: 'Contact updated' });
     } catch (err) {
