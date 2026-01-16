@@ -9,6 +9,7 @@ import Card from '@/components/ui/Card.vue'
 import CardContent from '@/components/ui/CardContent.vue'
 import Dialog from '@/components/ui/Dialog.vue'
 import Label from '@/components/ui/Label.vue'
+import Input from '@/components/ui/Input.vue'
 
 const appStore = useApplicationStore()
 const docStore = useDocumentsStore()
@@ -74,6 +75,34 @@ function openDetails(app) {
   isDetailsOpen.value = true
 }
 
+// Add Modal State
+const isAddOpen = ref(false)
+const form = ref({
+  company: '',
+  position: '',
+  location: '',
+  type: 'Full-time',
+  status: 'To Apply'
+})
+
+const types = ['Full-time', 'Part-time', 'Internship', 'Freelance', 'Apprenticeship']
+
+function openAddModal(status) {
+  form.value = {
+    company: '',
+    position: '',
+    location: '',
+    type: 'Full-time',
+    status: status || 'To Apply'
+  }
+  isAddOpen.value = true
+}
+
+async function saveApplication() {
+  await appStore.createApplication(form.value)
+  isAddOpen.value = false
+}
+
 async function handleSaveDetails() {
   if (!selectedApp.value) return
   await appStore.updateApplication(selectedApp.value.id, {
@@ -120,7 +149,7 @@ function formatDate(isoString) {
                 {{ applicationsByStatus[column.id]?.length || 0 }}
             </span>
           </div>
-          <Button variant="ghost" size="icon" class="h-8 w-8">
+          <Button variant="ghost" size="icon" class="h-8 w-8" @click="openAddModal(column.id)">
             <Plus class="h-4 w-4" />
           </Button>
         </div>
@@ -176,6 +205,7 @@ function formatDate(isoString) {
 
     <!-- Details Dialog (Copied from Dashboard for consistency) -->
     <Dialog v-model:open="isDetailsOpen" title="Application Details">
+      <!-- ... existing details content ... -->
       <div v-if="selectedApp" class="space-y-4 mt-4">
         <div class="grid grid-cols-2 gap-4">
           <div>
@@ -229,6 +259,40 @@ function formatDate(isoString) {
            <Button @click="handleSaveDetails">Save Changes</Button>
         </div>
       </div>
+    </Dialog>
+
+    <!-- Add Application Dialog -->
+    <Dialog v-model:open="isAddOpen" title="New Application">
+       <form @submit.prevent="saveApplication" class="space-y-4 mt-4">
+          <div class="grid grid-cols-2 gap-4">
+             <div class="space-y-2">
+                <Label for="company">Company</Label>
+                <Input id="company" v-model="form.company" required placeholder="e.g. Google" />
+             </div>
+             <div class="space-y-2">
+                <Label for="position">Position</Label>
+                <Input id="position" v-model="form.position" required placeholder="e.g. Frontend Dev" />
+             </div>
+          </div>
+          
+          <div class="grid grid-cols-2 gap-4">
+             <div class="space-y-2">
+                <Label for="location">Location</Label>
+                <Input id="location" v-model="form.location" placeholder="e.g. Paris" />
+             </div>
+             <div class="space-y-2">
+                <Label for="status">Status</Label>
+                <select id="status" v-model="form.status" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                   <option v-for="col in columns" :key="col.id" :value="col.id">{{ col.title }}</option>
+                </select>
+             </div>
+          </div>
+
+          <div class="flex justify-end gap-2 pt-4">
+             <Button type="button" variant="ghost" @click="isAddOpen = false">Cancel</Button>
+             <Button type="submit">Create Application</Button>
+          </div>
+       </form>
     </Dialog>
   </div>
 </template>

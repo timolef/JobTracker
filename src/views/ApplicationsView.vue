@@ -133,7 +133,7 @@ function needsFollowUp(app) {
         <h2 class="text-3xl font-bold tracking-tight">{{ t('applications.title') }}</h2>
         <p class="text-muted-foreground mt-1">{{ t('applications.subtitle') }}</p>
       </div>
-      <Button class="rounded-xl shadow-lg shadow-primary/20" @click="openAddDialog">
+      <Button class="rounded-xl shadow-lg shadow-primary/20" @click="openAddModal">
         <Plus class="h-4 w-4 mr-2" /> {{ t('applications.add_app') }}
       </Button>
     </div>
