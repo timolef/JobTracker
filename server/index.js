@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 3000;
 // Initialize Database
 initDB();
 
-// CORS Configuration & Headers Injection
+// CORS Configuration
 const allowedOrigins = [
     'https://job-tracker-ten-sooty.vercel.app',
     'http://localhost:5173',
@@ -19,24 +19,32 @@ const allowedOrigins = [
     'https://jobtracker-production-03e6.up.railway.app'
 ];
 
+app.use(cors({
+    origin: function (origin, callback) {
+        // allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.indexOf(origin) !== -1 || origin.includes('vercel.app') || origin.includes('localhost')) {
+            callback(null, true);
+        } else {
+            console.log(`[CORS] Rejected Origin: ${origin}`);
+            callback(null, false); // Don't throw error, just don't set the header
+        }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Cache-Control', 'Pragma'],
+    maxAge: 0 // Disable preflight caching
+}));
+
+// Force No-Cache Middleware
 app.use((req, res, next) => {
-    const origin = req.headers.origin;
-
-    if (origin && (allowedOrigins.includes(origin) || origin.includes('vercel.app'))) {
-        res.setHeader('Access-Control-Allow-Origin', origin);
-    }
-
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Vary', 'Origin');
-
-    // Handle preflight immediately with 200
-    if (req.method === 'OPTIONS') {
-        return res.status(200).end();
-    }
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Surrogate-Control', 'no-store');
     next();
 });
+
 
 app.use(express.json());
 

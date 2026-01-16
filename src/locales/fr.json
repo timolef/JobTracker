@@ -1,0 +1,55 @@
+{
+    "nav": {
+        "dashboard": "Tableau de Bord",
+        "board": "Pipeline",
+        "contacts": "Contacts",
+        "interviews": "Entretiens",
+        "applications": "Candidatures",
+        "documents": "Documents",
+        "search": "Trouver un Job",
+        "pricing": "Tarifs",
+        "profile": "Profil",
+        "upgrade": "Passer Pro"
+    },
+    "dashboard": {
+        "title": "Tableau de Bord",
+        "welcome": "Ravi de vous revoir ! Voici un aperçu de votre progression.",
+        "pro_member": "MEMBRE PRO",
+        "stats": {
+            "total_apps": "Total Candidatures",
+            "interviews": "Entretiens",
+            "offers": "Offres Reçues",
+            "response_rate": "Taux de Réponse"
+        },
+        "charts": {
+            "activity": "Activité des Candidatures",
+            "status": "Répartition par Statut"
+        },
+        "reminders": {
+            "title": "Rappels à venir",
+            "urgent": "Urgent",
+            "upcoming": "À venir",
+            "no_reminders": "Aucun rappel pour le moment.",
+            "view_details": "Voir détails"
+        }
+    },
+    "common": {
+        "logout": "Déconnexion",
+        "settings": "Paramètres",
+        "cancel": "Annuler",
+        "save": "Enregistrer",
+        "delete": "Supprimer",
+        "edit": "Modifier",
+        "add": "Ajouter",
+        "loading": "Chargement...",
+        "search": "Rechercher..."
+    },
+    "pricing": {
+        "title": "Choisissez votre plan",
+        "subtitle": "Libérez votre potentiel avec JobTracker Pro",
+        "free_plan": "Plan Gratuit",
+        "pro_plan": "Plan Pro",
+        "upgrade_now": "Améliorer",
+        "current_plan": "Plan Actuel"
+    }
+}

@@ -1,0 +1,55 @@
+{
+    "nav": {
+        "dashboard": "Dashboard",
+        "board": "Board",
+        "contacts": "Contacts",
+        "interviews": "Interviews",
+        "applications": "Applications",
+        "documents": "Documents",
+        "search": "Find Jobs",
+        "pricing": "Pricing",
+        "profile": "Profile",
+        "upgrade": "Upgrade to Pro"
+    },
+    "dashboard": {
+        "title": "Dashboard",
+        "welcome": "Welcome back! Here's an overview of your progress.",
+        "pro_member": "PRO MEMBER",
+        "stats": {
+            "total_apps": "Total Applications",
+            "interviews": "Interviews",
+            "offers": "Offers Received",
+            "response_rate": "Response Rate"
+        },
+        "charts": {
+            "activity": "Application Activity",
+            "status": "Status Distribution"
+        },
+        "reminders": {
+            "title": "Upcoming Reminders",
+            "urgent": "Urgent",
+            "upcoming": "Upcoming",
+            "no_reminders": "No reminders for now.",
+            "view_details": "View details"
+        }
+    },
+    "common": {
+        "logout": "Logout",
+        "settings": "Settings",
+        "cancel": "Cancel",
+        "save": "Save",
+        "delete": "Delete",
+        "edit": "Edit",
+        "add": "Add",
+        "loading": "Loading...",
+        "search": "Search..."
+    },
+    "pricing": {
+        "title": "Choose your plan",
+        "subtitle": "Unlock your potential with JobTracker Pro",
+        "free_plan": "Free Plan",
+        "pro_plan": "Pro Plan",
+        "upgrade_now": "Upgrade Now",
+        "current_plan": "Current Plan"
+    }
+}

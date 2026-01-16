@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useI18n } from 'vue-i18n'
 import { 
   LayoutDashboard, 
   Briefcase, 
@@ -18,16 +19,23 @@ import {
 
 const route = useRoute()
 const auth = useAuthStore()
+const { t, locale } = useI18n()
 
-const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, premium: false },
-  { name: 'Board', href: '/kanban', icon: Briefcase, premium: true },
-  { name: 'Contacts', href: '/contacts', icon: User, premium: true },
-  { name: 'Interviews', href: '/interviews', icon: Calendar, premium: true },
-  { name: 'Applications', href: '/applications', icon: Briefcase, premium: false },
-  { name: 'Documents', href: '/documents', icon: FileText, premium: false },
-  { name: 'Find Jobs', href: '/search', icon: Search, premium: false },
-]
+const navigation = computed(() => [
+  { name: t('nav.dashboard'), href: '/dashboard', icon: LayoutDashboard, premium: false },
+  { name: t('nav.board'), href: '/kanban', icon: Briefcase, premium: true },
+  { name: t('nav.contacts'), href: '/contacts', icon: User, premium: true },
+  { name: t('nav.interviews'), href: '/interviews', icon: Calendar, premium: true },
+  { name: t('nav.applications'), href: '/applications', icon: Briefcase, premium: false },
+  { name: t('nav.documents'), href: '/documents', icon: FileText, premium: false },
+  { name: t('nav.search'), href: '/search', icon: Search, premium: false },
+])
+
+function toggleLanguage() {
+  const newLocale = locale.value === 'fr' ? 'en' : 'fr'
+  locale.value = newLocale
+  localStorage.setItem('locale', newLocale)
+}
 
 const router = useRouter()
 
@@ -106,8 +114,22 @@ onMounted(() => {
 
       <div v-if="!auth.isPremium" class="px-4 mb-4">
         <router-link to="/pricing" class="flex items-center justify-center gap-2 px-3 py-3 rounded-xl bg-gradient-to-r from-primary to-purple-600 text-white text-xs font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all">
-          <Sparkles class="h-3.5 w-3.5" /> Upgrade to Pro
+          <Sparkles class="h-3.5 w-3.5" /> {{ t('nav.upgrade') }}
         </router-link>
+      </div>
+
+      <div class="px-4 pb-2">
+        <div class="flex items-center justify-between p-1 rounded-xl bg-muted/30 border border-border/50">
+           <button 
+             v-for="lang in ['fr', 'en']" 
+             :key="lang"
+             @click="locale = lang; localStorage.setItem('locale', lang)"
+             class="flex-1 px-2 py-1.5 text-[10px] font-bold rounded-lg transition-all"
+             :class="locale === lang ? 'bg-primary text-white shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+           >
+             {{ lang.toUpperCase() }}
+           </button>
+        </div>
       </div>
 
       <div class="px-4 py-4">
@@ -139,7 +161,7 @@ onMounted(() => {
             </div>
             <p class="text-[11px] text-muted-foreground truncate">{{ auth.user?.email }}</p>
           </div>
-          <button @click.prevent.stop="auth.logout" class="text-muted-foreground hover:text-destructive transition-all">
+          <button @click.prevent.stop="auth.logout" class="text-muted-foreground hover:text-destructive transition-all" :title="t('common.logout')">
             <LogOut class="h-4 w-4" />
           </button>
         </router-link>

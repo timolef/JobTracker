@@ -3,6 +3,7 @@ import { useApplicationStore } from '@/stores/applications'
 import { useAuthStore } from '@/stores/auth'
 import { useContactStore } from '@/stores/contacts'
 import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import AdBanner from '@/components/AdBanner.vue'
 import Card from '@/components/ui/Card.vue'
 import CardHeader from '@/components/ui/CardHeader.vue'
@@ -42,6 +43,7 @@ ChartJS.register(
 const authStore = useAuthStore()
 const appStore = useApplicationStore()
 const contactStore = useContactStore()
+const { t } = useI18n()
 
 onMounted(() => {
   if (authStore.isAuthenticated) {
@@ -52,27 +54,27 @@ onMounted(() => {
 
 const stats = computed(() => [
   {
-    title: 'Total Applications',
+    title: t('dashboard.stats.total_apps'),
     value: () => appStore.stats.total,
     icon: Briefcase,
     class: 'text-blue-500' 
   },
   {
-    title: 'Interviews',
+    title: t('dashboard.stats.interviews'),
     value: () => appStore.stats.interview,
     icon: MessageSquare,
     class: 'text-purple-500'
   },
   {
-    title: 'Response Rate',
+    title: t('dashboard.stats.response_rate'),
     value: () => `${appStore.stats.responseRate}%`,
     icon: CheckCircle2,
     class: 'text-green-500'
   },
   {
-    title: 'Active Processes',
-    value: () => appStore.stats.active,
-    icon: Briefcase, // reused
+    title: t('dashboard.stats.offers'),
+    value: () => appStore.stats.offers,
+    icon: Briefcase,
     class: 'text-orange-500'
   }
 ])
@@ -244,10 +246,10 @@ const doughnutOptions = {
     <div class="flex items-center justify-between mb-8">
       <div>
       <div class="flex items-center gap-3">
-        <h2 class="text-3xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">Dashboard</h2>
-        <span v-if="authStore.isPremium" class="bg-primary/10 text-primary text-[10px] font-bold px-2 py-1 rounded border border-primary/20 shadow-sm animate-pulse">PRO MEMBER</span>
+        <h2 class="text-3xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">{{ t('dashboard.title') }}</h2>
+        <span v-if="authStore.isPremium" class="bg-primary/10 text-primary text-[10px] font-bold px-2 py-1 rounded border border-primary/20 shadow-sm animate-pulse">{{ t('dashboard.pro_member') }}</span>
       </div>
-        <p class="text-muted-foreground mt-1">Welcome back! Here's an overview of your progress.</p>
+        <p class="text-muted-foreground mt-1">{{ t('dashboard.welcome') }}</p>
       </div>
     </div>
 
@@ -274,7 +276,7 @@ const doughnutOptions = {
       <Card class="glass border-none md:col-span-1">
         <CardHeader class="flex flex-row items-center justify-between space-y-0">
           <CardTitle class="text-lg font-semibold flex items-center gap-2">
-            <PieChartIcon class="h-4 w-4 text-primary" /> Application Status
+            <PieChartIcon class="h-4 w-4 text-primary" /> {{ t('dashboard.charts.status') }}
           </CardTitle>
         </CardHeader>
         <CardContent class="h-[250px] pt-4">
@@ -285,7 +287,7 @@ const doughnutOptions = {
       <Card class="glass border-none md:col-span-1">
         <CardHeader class="flex flex-row items-center justify-between space-y-0">
           <CardTitle class="text-lg font-semibold flex items-center gap-2">
-            <TrendingUp class="h-4 w-4 text-primary" /> 7-Day Activity
+            <TrendingUp class="h-4 w-4 text-primary" /> {{ t('dashboard.charts.activity') }}
           </CardTitle>
         </CardHeader>
         <CardContent class="h-[250px] pt-4">
@@ -296,7 +298,7 @@ const doughnutOptions = {
       <Card class="glass border-none md:col-span-1">
         <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle class="text-lg font-semibold flex items-center gap-2">
-            <Bell class="h-4 w-4 text-orange-500" /> Reminders
+            <Bell class="h-4 w-4 text-orange-500" /> {{ t('dashboard.reminders.title') }}
           </CardTitle>
           <div v-if="urgentReminders.length > 0" class="h-2 w-2 rounded-full bg-orange-500 animate-pulse"></div>
         </CardHeader>
