@@ -52,7 +52,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-background flex flex-col md:flex-row">
+  <div class="h-screen bg-background flex flex-col md:flex-row overflow-hidden">
     <!-- Mobile Top Bar -->
     <header class="md:hidden flex items-center justify-between p-4 glass sticky top-0 z-30 border-b border-border/50">
       <div class="flex items-center gap-4">
@@ -159,7 +159,7 @@ onMounted(() => {
     </aside>
 
     <!-- Sidebar (Desktop only) -->
-    <aside class="w-64 border-r md:flex flex-col hidden glass z-20 transition-all duration-500">
+    <aside class="w-64 border-r md:flex flex-col hidden glass z-20 transition-all duration-500 h-full overflow-y-auto">
       <div class="p-6">
         <div class="flex items-center gap-2">
           <h1 class="text-2xl font-bold tracking-tight bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">JobTracker</h1>
