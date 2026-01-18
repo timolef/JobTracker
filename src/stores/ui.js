@@ -32,9 +32,19 @@ export const useUIStore = defineStore('ui', () => {
         applyTheme(defaultTheme)
     }
 
+    // Focus Mode
+    const isFocusMode = ref(localStorage.getItem('focusMode') === 'true')
+
+    function toggleFocusMode() {
+        isFocusMode.value = !isFocusMode.value
+        localStorage.setItem('focusMode', isFocusMode.value.toString())
+    }
+
     return {
         theme,
         toggleTheme,
-        initTheme
+        initTheme,
+        isFocusMode,
+        toggleFocusMode
     }
 })

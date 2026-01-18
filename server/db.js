@@ -24,6 +24,9 @@ async function initDB() {
         email VARCHAR(255) NOT NULL UNIQUE,
         password_hash VARCHAR(255) NOT NULL,
         is_premium BOOLEAN DEFAULT FALSE,
+        google_access_token TEXT,
+        google_refresh_token TEXT,
+        google_token_expiry DATETIME,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
@@ -99,6 +102,18 @@ async function initDB() {
       )
     `);
 
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS interactions (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        contact_id INT NOT NULL,
+        type ENUM('Email', 'Call', 'Meeting', 'Linkedin', 'Other') DEFAULT 'Email',
+        date DATETIME NOT NULL,
+        notes TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE
+      )
+    `);
+
     // Safe Migrations
     console.log('Running safe migrations...');
     const tables = ['users', 'applications', 'contacts'];
@@ -121,6 +136,9 @@ async function initDB() {
     await checkColumnAndAdd('applications', 'cover_letter_id', 'INT');
     await checkColumnAndAdd('applications', 'follow_up_date', 'DATE');
     await checkColumnAndAdd('contacts', 'follow_up_date', 'DATE');
+    await checkColumnAndAdd('contacts', 'last_contact_date', 'DATETIME');
+    await checkColumnAndAdd('contacts', 'follow_up_frequency', 'INT DEFAULT 30'); // Days
+    await checkColumnAndAdd('contacts', 'relationship_strength', "ENUM('Weak', 'Medium', 'Strong') DEFAULT 'Medium'");
 
     connection.release();
     console.log('Database initialized (Users, Applications, Documents tables ready).');

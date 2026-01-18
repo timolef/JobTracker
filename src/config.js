@@ -1,6 +1,6 @@
 const isDev = import.meta.env.DEV;
 const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
-const localUrl = `http://${hostname}:3000`;
+const localUrl = `http://${hostname}:5000`;
 const railwayUrl = 'https://jobtracker-production-03e6.up.railway.app';
 
 // Prioritize local URL in development

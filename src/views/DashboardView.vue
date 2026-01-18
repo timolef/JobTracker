@@ -12,6 +12,8 @@ import Button from '@/components/ui/Button.vue'
 import Dialog from '@/components/ui/Dialog.vue'
 import Label from '@/components/ui/Label.vue'
 import Input from '@/components/ui/Input.vue'
+import SalaryCalculator from '@/components/SalaryCalculator.vue'
+import GoogleAd from '@/components/GoogleAd.vue'
 import { Briefcase, CheckCircle2, MessageSquare, XCircle, Eye, TrendingUp, PieChart as PieChartIcon, Bell, User, Mail, Phone, Linkedin, ExternalLink } from 'lucide-vue-next'
 import {
   Chart as ChartJS,
@@ -297,7 +299,7 @@ const doughnutOptions = {
     </div>
 
     <!-- Charts and Reminders -->
-    <div class="grid gap-6 grid-cols-1 md:grid-cols-3">
+    <div class="grid gap-6 grid-cols-1 md:grid-cols-2 xl:grid-cols-4">
       <Card class="glass border-none md:col-span-1">
         <CardHeader class="flex flex-row items-center justify-between space-y-0">
           <CardTitle class="text-lg font-semibold flex items-center gap-2">
@@ -351,7 +353,13 @@ const doughnutOptions = {
           </div>
         </CardContent>
       </Card>
+
+      <!-- Salary Calculator -->
+      <SalaryCalculator class="glass border-none md:col-span-1 h-full" />
     </div>
+
+    <!-- Ad Banner -->
+    <GoogleAd slotId="dashboard-banner" format="auto" />
 
     <!-- Recent Activity Placeholder -->
     <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-7">

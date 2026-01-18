@@ -11,7 +11,8 @@ import {
   User, 
   Search, 
   ExternalLink, 
-  Trash2, 
+  Trash2,
+  Mic, 
   Edit2,
   CheckCircle2,
   Clock,
@@ -26,6 +27,9 @@ import Dialog from '@/components/ui/Dialog.vue'
 import Card from '@/components/ui/Card.vue'
 import CardContent from '@/components/ui/CardContent.vue'
 import Badge from '@/components/ui/Badge.vue'
+import GoogleCalendarImport from '@/components/GoogleCalendarImport.vue'
+import VoiceRecorder from '@/components/VoiceRecorder.vue'
+import ExportButton from '@/components/ExportButton.vue'
 
 const interviewStore = useInterviewStore()
 const appStore = useApplicationStore()
@@ -128,6 +132,11 @@ function getGoogleCalendarUrl(interview) {
   const details = encodeURIComponent(`Type: ${interview.type}\nNotes: ${interview.notes || ''}`)
   return `https://www.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${start}/${end}&details=${details}`
 }
+
+function handleImported(count) {
+  alert(`Successfully imported ${count} interview${count !== 1 ? 's' : ''} from Google Calendar!`)
+  interviewStore.fetchInterviews()
+}
 </script>
 
 <template>
@@ -137,10 +146,20 @@ function getGoogleCalendarUrl(interview) {
         <h2 class="text-3xl font-bold tracking-tight">Interviews Manager</h2>
         <p class="text-muted-foreground">Schedule and prepare for your upcoming job interviews.</p>
       </div>
-      <Button @click="openAddModal">
-        <Plus class="mr-2 h-4 w-4" /> Schedule Interview
-      </Button>
+      <div class="flex gap-2">
+         <ExportButton 
+            :data="interviewStore.interviews" 
+            type="interviews"
+            filename="my-interviews"
+         />
+         <Button @click="openAddModal">
+            <Plus class="mr-2 h-4 w-4" /> Schedule Interview
+         </Button>
+      </div>
     </div>
+
+    <!-- Google Calendar Import -->
+    <GoogleCalendarImport @imported="handleImported" />
 
     <!-- Upcoming Interviews -->
     <div class="space-y-4">
@@ -263,6 +282,14 @@ function getGoogleCalendarUrl(interview) {
 - Why this role?
 - My questions for them..."
                 ></textarea>
+             </div>
+
+             <div class="space-y-2">
+                 <Label class="flex items-center gap-2">
+                    <Mic class="h-4 w-4 text-primary" /> Voice Notes
+                 </Label>
+                 <VoiceRecorder />
+                 <p class="text-[10px] text-muted-foreground">Record your thoughts or practice answers (not saved permanently in this demo)</p>
              </div>
           </div>
           

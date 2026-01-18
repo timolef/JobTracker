@@ -67,6 +67,7 @@ app.use('/api/applications', require('./applications'));
 app.use('/api/documents', require('./documents'));
 app.use('/api/contacts', require('./contacts'));
 app.use('/api/interviews', require('./interviews'));
+app.use('/api/calendar', require('./calendar'));
 
 app.post('/api/scrape', async (req, res) => {
     const { platform, keyword, location, limit } = req.body;

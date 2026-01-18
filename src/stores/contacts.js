@@ -80,6 +80,46 @@ export const useContactStore = defineStore('contacts', {
                 this.error = err.message
                 throw err
             }
+        },
+
+        async fetchInteractions(contactId) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/contacts/${contactId}/interactions`, {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                })
+                if (!response.ok) throw new Error('Failed to fetch interactions')
+                return await response.json()
+            } catch (err) {
+                console.error(err)
+                return []
+            }
+        },
+
+        async logInteraction(contactId, interactionData) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/contacts/${contactId}/interactions`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify(interactionData)
+                })
+                if (!response.ok) throw new Error('Failed to log interaction')
+
+                // Refresh local contact data (last_contact_date updated)
+                const index = this.contacts.findIndex(c => c.id === contactId)
+                if (index !== -1) {
+                    const today = new Date()
+                    this.contacts[index].last_contact_date = today.toISOString()
+                    this.contacts[index].follow_up_date = new Date(Date.now() + (this.contacts[index].follow_up_frequency || 30) * 86400000).toISOString()
+                }
+
+                return await response.json()
+            } catch (err) {
+                this.error = err.message
+                throw err
+            }
         }
     }
 })

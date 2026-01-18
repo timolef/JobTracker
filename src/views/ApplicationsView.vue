@@ -10,6 +10,7 @@ import Badge from '@/components/ui/Badge.vue'
 import Dialog from '@/components/ui/Dialog.vue'
 import Card from '@/components/ui/Card.vue'
 import CardContent from '@/components/ui/CardContent.vue'
+import ExportButton from '@/components/ExportButton.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useI18n } from 'vue-i18n'
 
@@ -151,9 +152,22 @@ function needsFollowUp(app) {
         <h2 class="text-3xl font-bold tracking-tight">{{ t('applications.title') }}</h2>
         <p class="text-muted-foreground mt-1">{{ t('applications.subtitle') }}</p>
       </div>
-      <Button class="rounded-xl shadow-lg shadow-primary/20" @click="openAddModal">
-        <Plus class="h-4 w-4 mr-2" /> {{ t('applications.add_app') }}
-      </Button>
+      <div class="flex gap-2">
+         <ExportButton 
+            :data="appStore.applications" 
+            :stats="{
+               total: appStore.applications.length,
+               pending: appStore.applications.filter(a => a.status === 'Applied').length,
+               interviews: appStore.applications.filter(a => a.status === 'Interview').length,
+               offers: appStore.applications.filter(a => a.status === 'Offer').length,
+               rejected: appStore.applications.filter(a => a.status === 'Refusal').length
+            }"
+            type="applications"
+         />
+         <Button class="rounded-xl shadow-lg shadow-primary/20" @click="openAddModal">
+            <Plus class="h-4 w-4 mr-2" /> {{ t('applications.add_app') }}
+         </Button>
+      </div>
     </div>
 
     <!-- Quick Stats Bar -->
