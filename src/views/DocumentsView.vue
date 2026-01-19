@@ -13,6 +13,7 @@ import Input from '@/components/ui/Input.vue'
 import Label from '@/components/ui/Label.vue'
 import Card from '@/components/ui/Card.vue'
 import CardContent from '@/components/ui/CardContent.vue'
+import DocumentPreview from '@/components/DocumentPreview.vue'
 
 const docStore = useDocumentsStore()
 const authStore = useAuthStore()
@@ -81,6 +82,16 @@ const isRenameOpen = ref(false)
 const renameId = ref(null)
 const renameName = ref('')
 
+const isPreviewOpen = ref(false)
+const previewDocId = ref(null)
+const previewDocName = ref('')
+
+function openPreview(doc) {
+    previewDocId.value = doc.id
+    previewDocName.value = doc.name
+    isPreviewOpen.value = true
+}
+
 function openRenameModal(doc) {
     renameId.value = doc.id
     renameName.value = doc.name
@@ -140,7 +151,7 @@ function formatDate(isoString) {
                     </div>
                 </div>
                 <div class="flex gap-1">
-                    <Button variant="ghost" size="icon" @click="docStore.viewDocument(doc.id)">
+                    <Button variant="ghost" size="icon" @click="openPreview(doc)">
                         <Eye class="h-4 w-4" />
                     </Button>
                      <Button variant="ghost" size="icon" @click="openRenameModal(doc)">
@@ -243,5 +254,12 @@ function formatDate(isoString) {
             </div>
         </div>
     </Dialog>
+
+    <!-- Document Preview Modal -->
+    <DocumentPreview 
+       v-model:open="isPreviewOpen" 
+       :doc-id="previewDocId" 
+       :doc-name="previewDocName" 
+    />
   </div>
 </template>
