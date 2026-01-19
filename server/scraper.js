@@ -251,6 +251,115 @@ async function scrapeJobs(platform, keyword, location, limit = 15) {
                 if (jobs.length >= limit) break;
                 pageNum++;
             }
+        } else if (platform === 'HelloWork') {
+            const baseUrl = `https://www.hellowork.com/fr-fr/emploi/recherche.html?k=${encodeURIComponent(keyword)}&l=${encodeURIComponent(location)}`;
+
+            while (jobs.length < limit) {
+                const url = pageNum === 0 ? baseUrl : `${baseUrl}&p=${pageNum + 1}`;
+                console.log(`[HelloWork] Navigating to Page ${pageNum + 1}: ${url}`);
+
+                await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+
+                try {
+                    await page.waitForSelector('ul.tw-grid li h3', { timeout: 10000 });
+                } catch (e) {
+                    console.log('[HelloWork] No results found on this page.');
+                    break;
+                }
+
+                const newJobs = await page.evaluate((pageIdx) => {
+                    // HelloWork list items
+                    const methods = document.querySelectorAll('ul.tw-grid li');
+                    return Array.from(methods).map((item, id) => {
+                        // Skip if not a job card (e.g. ads)
+                        const titleEl = item.querySelector('h3 p.tw-typo-l') || item.querySelector('h3');
+                        if (!titleEl) return null;
+
+                        const companyEl = item.querySelector('p.tw-typo-s');
+                        const locationEl = item.querySelector('.tw-readonly') || item.querySelector('span[class*="location"]');
+                        const linkEl = item.querySelector('a.tw-forwarder') || item.querySelector('a[href*="/emploi/"]');
+
+                        return {
+                            id: `hw-${pageIdx}-${id}-${Date.now()}`,
+                            title: titleEl ? titleEl.textContent.trim() : 'Unknown Role',
+                            company: companyEl ? companyEl.textContent.trim() : 'Unknown Company',
+                            location: locationEl ? locationEl.textContent.trim() : 'France',
+                            type: 'Full-time',
+                            link: linkEl ? linkEl.href : '#',
+                            platform: 'HelloWork',
+                            posted: 'Recently'
+                        };
+                    }).filter(Boolean);
+                }, pageNum);
+
+                if (newJobs.length === 0) break;
+
+                // Deduplicate
+                const currentLinks = new Set(jobs.map(j => j.link));
+                newJobs.forEach(job => {
+                    if (job.link && job.link !== '#' && !currentLinks.has(job.link)) {
+                        jobs.push(job);
+                        currentLinks.add(job.link);
+                    }
+                });
+
+                if (jobs.length >= limit) break;
+                pageNum++;
+                await new Promise(r => setTimeout(r, 1000));
+            }
+
+        } else if (platform === 'Apec') {
+            // Apec Search
+            // https://www.apec.fr/candidat/recherche-emploi.html/emploi?motsCles=Developpeur&lieux=75
+            const baseUrl = `https://www.apec.fr/candidat/recherche-emploi.html/emploi?motsCles=${encodeURIComponent(keyword)}&lieux=${encodeURIComponent(location)}`;
+
+            console.log(`[Apec] Navigating to: ${baseUrl}`);
+            await page.goto(baseUrl, { waitUntil: 'networkidle2', timeout: 60000 });
+
+            try {
+                // Apec loads via API, wait for custom component
+                await page.waitForSelector('apec-recherche-resultat', { timeout: 15000 });
+
+                // Allow time for list to populate fully
+                await new Promise(r => setTimeout(r, 2000));
+
+                // Scroll to load more if needed (Apec uses infinite scroll or load more button, but for first batch it's fine)
+                await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+                await new Promise(r => setTimeout(r, 1000));
+
+                const scrapedJobs = await page.evaluate(() => {
+                    const cards = document.querySelectorAll('apec-recherche-resultat');
+                    return Array.from(cards).map((card, id) => {
+                        // The card is usually wrapped in an anchor or has an anchor inside
+                        const linkContainer = card.closest('a') || card.querySelector('a');
+                        const titleEl = card.querySelector('h2');
+                        const companyEl = card.querySelector('p'); // The first paragraph is usually the company text
+                        const details = card.querySelectorAll('li'); // Salary, Contract, Location, Date
+
+                        let location = 'France';
+                        if (details.length >= 3) {
+                            location = details[2].textContent.trim();
+                        }
+
+                        return {
+                            id: `apec-${id}-${Date.now()}`,
+                            title: titleEl ? titleEl.textContent.trim() : 'Unknown Role',
+                            company: companyEl ? companyEl.textContent.trim() : 'Unknown Company',
+                            location: location,
+                            type: details.length >= 2 ? details[1].textContent.trim() : 'Full-time',
+                            link: linkContainer ? linkContainer.href : '#',
+                            platform: 'Apec',
+                            posted: details.length >= 4 ? details[3].textContent.trim() : 'Recently'
+                        };
+                    });
+                });
+
+                jobs.push(...scrapedJobs);
+
+            } catch (e) {
+                console.log('[Apec] Error scraping or no results:', e.message);
+            }
+
         } else {
             console.log(`Platform ${platform} not implemented yet`);
         }

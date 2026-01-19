@@ -27,7 +27,7 @@ const results = ref([])
 const selectedJobs = ref([])
 const importingJobs = ref(new Set()) // Track individual imports
 
-const platforms = ['LinkedIn', 'Indeed', 'Welcome to the Jungle', 'Glassdoor', 'Hellowork']
+const platforms = ['LinkedIn', 'Indeed', 'Welcome to the Jungle', 'HelloWork', 'Apec']
 
 // Real Backend Integration
 async function handleSearch() {
