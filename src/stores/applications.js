@@ -17,9 +17,52 @@ export const useApplicationStore = defineStore('applications', () => {
             total,
             interview,
             responseRate,
-            active: applications.value.filter(a => ['Applied', 'Interview'].includes(a.status)).length
+            active: applications.value.filter(a => ['Applied', 'Interview'].includes(a.status)).length,
+            // Gamification Stats
+            streak: calculateStreak(applications.value),
+            badges: calculateBadges(applications.value, total, interview)
         }
     })
+
+    function calculateStreak(apps) {
+        if (!apps.length) return 0
+        const dates = [...new Set(apps.map(a => new Date(a.date_applied || a.created_at).toISOString().split('T')[0]))].sort().reverse()
+        let streak = 0
+        let today = new Date().toISOString().split('T')[0]
+        let yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
+
+        // If no app today or yesterday, streak is broken (unless it's 0)
+        // But we count from the latest contiguous block relative to now
+        if (dates[0] !== today && dates[0] !== yesterday) return 0
+
+        let currentCheck = dates.includes(today) ? today : yesterday
+
+        for (let date of dates) {
+            if (date === currentCheck) {
+                streak++
+                let d = new Date(currentCheck)
+                d.setDate(d.getDate() - 1)
+                currentCheck = d.toISOString().split('T')[0]
+            } else {
+                break
+            }
+        }
+        return streak
+    }
+
+    function calculateBadges(apps, total, interviewCount) {
+        const streak = calculateStreak(apps)
+        const offerCount = apps.filter(a => a.status === 'Offer').length
+
+        return [
+            { id: 'first_step', icon: '🌱', title: 'First Step', description: 'Apply to your first job', unlocked: total >= 1 },
+            { id: 'on_fire', icon: '🔥', title: 'On Fire', description: '3-day application streak', unlocked: streak >= 3 },
+            { id: 'marathon', icon: '🏃', title: 'Marathon', description: '20 Total Applications', unlocked: total >= 20 },
+            { id: 'networker', icon: '🤝', title: 'Networker', description: 'Have 5 active contacts', unlocked: false }, // Placeholder, needs contact store access or param
+            { id: 'interview_pro', icon: '🎙️', title: 'Interview Pro', description: 'Land an interview', unlocked: interviewCount >= 1 },
+            { id: 'offer_secured', icon: '🥂', title: 'Offer Secured', description: 'Receive a job offer', unlocked: offerCount >= 1 }
+        ]
+    }
 
     // Helper to get token
     const getToken = () => localStorage.getItem('token')

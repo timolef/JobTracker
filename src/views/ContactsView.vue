@@ -203,10 +203,20 @@ function formatDate(date) {
         </CardContent>
       </Card>
       
-      <div v-if="filteredContacts.length === 0" class="col-span-full text-center py-12 text-muted-foreground bg-muted/20 rounded-lg border border-dashed flex flex-col items-center gap-2">
-         <Users class="h-8 w-8 opacity-50" />
-         <p v-if="activeTab === 'reminders'">Great job! You're all caught up with your network.</p>
-         <p v-else>No contacts found. Start building your network!</p>
+      <div v-if="filteredContacts.length === 0" class="col-span-full flex flex-col items-center justify-center py-20 text-center glass rounded-3xl border-dashed border-2 animate-fade-in">
+         <div class="bg-primary/5 p-8 rounded-full mb-6 relative">
+            <User class="h-12 w-12 text-primary/50" />
+            <div class="absolute bottom-0 right-0 bg-background rounded-full p-1 shadow-sm">
+               <Plus class="h-4 w-4 text-primary" />
+            </div>
+         </div>
+         <h3 class="text-2xl font-bold mb-2">No contacts found</h3>
+         <p class="text-muted-foreground mb-8 max-w-md">
+            Building a network is key to career success. Add recruiters and professional contacts here.
+         </p>
+         <Button size="lg" class="rounded-full shadow-lg shadow-primary/20" @click="openAddModal">
+            <Plus class="mr-2 h-4 w-4" /> Add First Contact
+         </Button>
       </div>
     </div>
 

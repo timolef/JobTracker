@@ -185,18 +185,24 @@ onMounted(() => {
       
       <nav class="flex-1 px-4 space-y-2">
         <router-link 
-          v-for="item in navigation" 
+          v-for="(item, index) in navigation" 
           :key="item.name" 
           :to="item.href"
-          class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-300 group"
+          class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-300 group relative overflow-hidden"
           :class="[
             currentRoute === item.href 
-              ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20 scale-[1.02]' 
-              : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground hover:translate-x-1'
+              ? 'bg-primary/10 text-primary shadow-sm' 
+              : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
           ]"
+          :style="{ animationDelay: `${index * 50}ms` }"
         >
-          <component :is="item.icon" class="h-4 w-4 transition-transform group-hover:scale-110" />
-          <span class="flex-1">{{ item.name }}</span>
+          <div v-if="currentRoute === item.href" class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-r-full"></div>
+          <component 
+            :is="item.icon" 
+            class="h-4.5 w-4.5 transition-transform duration-300 group-hover:scale-110" 
+            :class="[currentRoute === item.href ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground']"
+          />
+          <span class="flex-1 z-10">{{ item.name }}</span>
         </router-link>
       </nav>
 

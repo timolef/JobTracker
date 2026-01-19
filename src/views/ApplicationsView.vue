@@ -266,15 +266,21 @@ function needsFollowUp(app) {
         </CardContent>
       </Card>
       
-      <div v-if="filteredApplications.length === 0" class="col-span-full flex flex-col items-center justify-center py-20 text-center glass rounded-3xl border-dashed border-2">
-         <div class="bg-primary/10 p-4 rounded-full mb-4">
-            <Building2 class="h-8 w-8 text-primary" />
+      <div v-if="filteredApplications.length === 0" class="col-span-full flex flex-col items-center justify-center py-20 text-center glass rounded-3xl border-dashed border-2 animate-fade-in">
+         <div class="bg-primary/5 p-8 rounded-full mb-6">
+            <Building2 class="h-12 w-12 text-primary/50" />
          </div>
-         <h3 class="text-xl font-bold mb-2">No applications found</h3>
-         <p class="text-muted-foreground mb-6 max-w-xs">Start your journey by searching for jobs or adding one manually.</p>
-         <div class="flex gap-3">
-            <Button variant="outline" @click="openAddModal">Add Manually</Button>
-            <Button @click="router.push('/search')">Search Jobs</Button>
+         <h3 class="text-2xl font-bold mb-2">No applications found</h3>
+         <p class="text-muted-foreground mb-8 max-w-md">
+            Ready to land your dream job? Start tracking your applications or explore new opportunities.
+         </p>
+         <div class="flex flex-col sm:flex-row gap-4">
+            <Button size="lg" class="rounded-full shadow-lg shadow-primary/20" @click="openAddModal">
+               <Plus class="mr-2 h-4 w-4" /> Add Manually
+            </Button>
+            <Button size="lg" variant="outline" class="rounded-full" @click="router.push('/search')">
+               <Search class="mr-2 h-4 w-4" /> Search Jobs
+            </Button>
          </div>
       </div>
     </div>

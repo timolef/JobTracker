@@ -3,7 +3,10 @@ import { useApplicationStore } from '@/stores/applications'
 import { useAuthStore } from '@/stores/auth'
 import { useContactStore } from '@/stores/contacts'
 import { computed, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+
+const router = useRouter()
 import Card from '@/components/ui/Card.vue'
 import CardHeader from '@/components/ui/CardHeader.vue'
 import CardTitle from '@/components/ui/CardTitle.vue'
@@ -14,7 +17,8 @@ import Label from '@/components/ui/Label.vue'
 import Input from '@/components/ui/Input.vue'
 import SalaryCalculator from '@/components/SalaryCalculator.vue'
 import GoogleAd from '@/components/GoogleAd.vue'
-import { Briefcase, CheckCircle2, MessageSquare, XCircle, Eye, TrendingUp, PieChart as PieChartIcon, Bell, User, Mail, Phone, Linkedin, ExternalLink } from 'lucide-vue-next'
+import GamificationWidget from '@/components/GamificationWidget.vue'
+import { Briefcase, CheckCircle2, MessageSquare, XCircle, Eye, TrendingUp, PieChart as PieChartIcon, Bell, User, Mail, Phone, Linkedin, ExternalLink, Search } from 'lucide-vue-next'
 import {
   Chart as ChartJS,
   Title,
@@ -276,12 +280,23 @@ const doughnutOptions = {
   <div class="space-y-8">
     <div class="flex items-center justify-between mb-8">
       <div>
-      <div class="flex items-center gap-3">
-        <h2 class="text-3xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">{{ t('dashboard.title') }}</h2>
-      </div>
+        <div class="flex items-center gap-3">
+          <h2 class="text-3xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">{{ t('dashboard.title') }}</h2>
+        </div>
         <p class="text-muted-foreground mt-1">{{ t('dashboard.welcome') }}</p>
       </div>
+      <Button 
+        class="hidden sm:flex bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 shadow-lg shadow-primary/25 rounded-full px-6 stagger-1 animate-fade-in"
+        size="lg"
+        @click="router.push('/search')"
+      >
+        <Search class="mr-2 h-5 w-5" />
+        Find your Job
+      </Button>
     </div>
+
+    <!-- Gamification Hero -->
+    <GamificationWidget class="mb-6" />
 
     <!-- Stats Grid -->
     <div class="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
