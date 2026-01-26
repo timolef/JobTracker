@@ -22,9 +22,17 @@ async function scrapeJobs(platform, keyword, location, limit = 15) {
         if (platform === 'Indeed') {
             const isFrance = location.toLowerCase().includes('france') || location.toLowerCase().includes('paris') || location.toLowerCase().includes('lyon') || location.toLowerCase().includes('lille');
             const domain = isFrance ? 'fr.indeed.com' : 'www.indeed.com';
-            // Use 'emplois' for France, 'jobs' otherwise. Indeed fr often redirects but let's be explicit.
             const pathName = isFrance ? 'emplois' : 'jobs';
             const baseUrl = `https://${domain}/${pathName}?q=${encodeURIComponent(keyword)}&l=${encodeURIComponent(location)}&from=searchOnHP`;
+
+            // Selector tracking for diagnostics
+            const selectorStats = {
+                jobCard: {},
+                title: {},
+                company: {},
+                location: {},
+                link: {}
+            };
 
             while (jobs.length < limit) {
                 const startParam = pageNum * 10;
@@ -38,10 +46,9 @@ async function scrapeJobs(platform, keyword, location, limit = 15) {
                     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
                 }
 
-                // Wait a bit for dynamic content
                 await new Promise(r => setTimeout(r, 4000));
 
-                // Try to close potential popups - be more specific to avoid clicking filters
+                // Close popups
                 try {
                     const popupSelectors = [
                         'button[aria-label="close"]',
@@ -64,61 +71,197 @@ async function scrapeJobs(platform, keyword, location, limit = 15) {
                     if (cookieButton) await cookieButton.click();
                 } catch (e) { }
 
-                // Check for Cloudflare/Auth wall
                 const title = await page.title();
                 console.log(`[Indeed] Page Title: "${title}"`);
 
-                // Wait for results with more fallbacks
-                try {
-                    await page.waitForSelector('.job_seen_beacon, .tapItem, [id^="job_"], .resultConfig, #mosaic-provider-jobcards', { timeout: 20000 });
-                } catch (e) {
-                    console.log('[Indeed] No job elements found after 20s.');
-                    const bodyText = await page.evaluate(() => document.body.innerText);
-                    if (bodyText.includes('hCaptcha') || bodyText.includes('security check')) {
-                        console.log('[Indeed] BLOCKED by security check.');
-                    }
+                // Wait for results with multiple fallback selectors
+                const jobCardSelectors = [
+                    '.job_seen_beacon',
+                    '.tapItem',
+                    '[id^="job_"]',
+                    '.resultContent',
+                    '#mosaic-provider-jobcards li',
+                    '.slider_container .slider_item',
+                    'div[data-jk]'
+                ];
 
-                    // Diagnostic screenshot
-                    const debugPath = require('path').join(__dirname, 'uploads', `indeed_fail_${Date.now()}.png`);
-                    await page.screenshot({ path: debugPath });
-                    console.log(`[Indeed] Fail screenshot saved to ${debugPath}`);
+                let foundSelector = null;
+                for (const selector of jobCardSelectors) {
+                    try {
+                        await page.waitForSelector(selector, { timeout: 5000 });
+                        foundSelector = selector;
+                        console.log(`[Indeed] ✓ Found jobs using selector: "${selector}"`);
+                        break;
+                    } catch (e) {
+                        // Try next selector
+                    }
                 }
 
-                const newJobs = await page.evaluate(() => {
-                    const items = document.querySelectorAll('.job_seen_beacon, .tapItem, [id^="job_"]');
-                    return Array.from(items).map((item) => {
-                        const titleEl = item.querySelector('h2 span') || item.querySelector('h2 a') || item.querySelector('.jobTitle') || item.querySelector('[id^="jobTitle"]');
-                        const companyEl = item.querySelector('[data-testid="company-name"]') || item.querySelector('.companyName') || item.querySelector('.company_location .companyName');
-                        const locationEl = item.querySelector('[data-testid="text-location"]') || item.querySelector('.companyLocation') || item.querySelector('.location');
-                        const linkEl = item.querySelector('a[id^="job_"]') || item.querySelector('h2 a') || item.closest('a');
+                if (!foundSelector) {
+                    console.log('[Indeed] ⚠ No job elements found with any selector.');
+                    const bodyText = await page.evaluate(() => document.body.innerText);
+                    if (bodyText.includes('hCaptcha') || bodyText.includes('security check')) {
+                        console.log('[Indeed] 🚫 BLOCKED by security check.');
+                    }
 
+                    // Save diagnostic info
+                    const debugPath = require('path').join(__dirname, 'uploads', `indeed_fail_${Date.now()}.png`);
+                    await page.screenshot({ path: debugPath, fullPage: true });
+
+                    const htmlPath = require('path').join(__dirname, 'uploads', `indeed_fail_${Date.now()}.html`);
+                    const html = await page.content();
+                    require('fs').writeFileSync(htmlPath, html);
+
+                    console.log(`[Indeed] 📸 Debug files saved: ${debugPath} and ${htmlPath}`);
+                    break;
+                }
+
+                // Extract jobs with fallback selectors
+                const newJobs = await page.evaluate((jobCardSelectors) => {
+                    // Helper function to try multiple selectors
+                    function trySelectors(element, selectors) {
+                        for (const selector of selectors) {
+                            const found = element.querySelector(selector);
+                            if (found && found.textContent.trim()) {
+                                return { element: found, selector };
+                            }
+                        }
+                        return { element: null, selector: null };
+                    }
+
+                    // Find all job cards using any of the selectors
+                    let items = [];
+                    for (const selector of jobCardSelectors) {
+                        const found = document.querySelectorAll(selector);
+                        if (found.length > 0) {
+                            items = Array.from(found);
+                            break;
+                        }
+                    }
+
+                    const titleSelectors = [
+                        'h2 span[title]',
+                        'h2 span',
+                        'h2 a',
+                        '.jobTitle span',
+                        '.jobTitle',
+                        '[id^="jobTitle"]',
+                        'h2.jobTitle',
+                        '.job-title',
+                        'a[data-jk] h2'
+                    ];
+
+                    const companySelectors = [
+                        '[data-testid="company-name"]',
+                        '.companyName',
+                        '.company_location .companyName',
+                        'span.companyName',
+                        '[data-testid="company-name"] span',
+                        '.company',
+                        'div[data-testid="company-name"]'
+                    ];
+
+                    const locationSelectors = [
+                        '[data-testid="text-location"]',
+                        '.companyLocation',
+                        '.location',
+                        'div[data-testid="text-location"]',
+                        '.company_location .companyLocation',
+                        'span.location'
+                    ];
+
+                    const linkSelectors = [
+                        'a[id^="job_"]',
+                        'h2 a',
+                        'a[data-jk]',
+                        '.jcs-JobTitle',
+                        'a.tapItem',
+                        'a.resultContent'
+                    ];
+
+                    return items.map((item) => {
+                        const titleResult = trySelectors(item, titleSelectors);
+                        const companyResult = trySelectors(item, companySelectors);
+                        const locationResult = trySelectors(item, locationSelectors);
+
+                        let linkEl = null;
+                        let linkSelector = null;
+                        for (const selector of linkSelectors) {
+                            linkEl = item.querySelector(selector);
+                            if (linkEl && linkEl.href) {
+                                linkSelector = selector;
+                                break;
+                            }
+                        }
+                        if (!linkEl) {
+                            linkEl = item.closest('a') || item.querySelector('a');
+                            linkSelector = 'fallback-closest-a';
+                        }
+
+                        const title = titleResult.element ? titleResult.element.textContent.trim().replace(/^new\s+/i, '') : null;
+                        const company = companyResult.element ? companyResult.element.textContent.trim() : null;
+                        const location = locationResult.element ? locationResult.element.textContent.trim() : null;
+                        const link = linkEl ? (linkEl.href.startsWith('/') ? window.location.origin + linkEl.getAttribute('href') : linkEl.href) : null;
+
+                        // Return with selector info for diagnostics
                         return {
                             id: null,
-                            title: titleEl ? titleEl.textContent.trim().replace(/^new\s+/i, '') : 'Unknown',
-                            company: companyEl ? companyEl.textContent.trim() : 'Unknown',
-                            location: locationEl ? locationEl.textContent.trim() : 'Unknown',
+                            title: title || 'Unknown',
+                            company: company || 'Unknown',
+                            location: location || 'Unknown',
                             type: 'Full-time',
-                            link: linkEl ? (linkEl.href.startsWith('/') ? window.location.origin + linkEl.getAttribute('href') : linkEl.href) : '#',
+                            link: link || '#',
                             platform: 'Indeed',
-                            posted: 'Recently'
-                        }
+                            posted: 'Recently',
+                            _selectorUsed: {
+                                title: titleResult.selector,
+                                company: companyResult.selector,
+                                location: locationResult.selector,
+                                link: linkSelector
+                            }
+                        };
                     });
+                }, jobCardSelectors);
+
+                // Track which selectors worked
+                newJobs.forEach(job => {
+                    if (job._selectorUsed) {
+                        Object.keys(job._selectorUsed).forEach(field => {
+                            const selector = job._selectorUsed[field];
+                            if (selector) {
+                                selectorStats[field][selector] = (selectorStats[field][selector] || 0) + 1;
+                            }
+                        });
+                    }
                 });
 
-                // Deduplicate and filter out non-jobs
+                // Filter and deduplicate
                 const uniqueNewJobs = [];
                 const currentLinks = new Set(jobs.map(j => j.link));
 
                 newJobs.forEach(job => {
-                    if (job.link && job.link !== '#' && !currentLinks.has(job.link) && job.title !== 'Unknown') {
+                    // Validate job has minimum required fields
+                    const isValid = job.title !== 'Unknown' &&
+                        job.company !== 'Unknown' &&
+                        job.link &&
+                        job.link !== '#' &&
+                        !job.link.includes('pagead') && // Filter ads
+                        !currentLinks.has(job.link);
+
+                    if (isValid) {
+                        delete job._selectorUsed; // Remove diagnostic data
                         currentLinks.add(job.link);
                         uniqueNewJobs.push(job);
                     }
                 });
 
-                console.log(`[Indeed] Found ${uniqueNewJobs.length} new unique jobs on page ${pageNum}.`);
+                console.log(`[Indeed] Found ${uniqueNewJobs.length} valid unique jobs on page ${pageNum}.`);
+
+                // Log selector statistics
+                console.log('[Indeed] Selector usage:', JSON.stringify(selectorStats, null, 2));
 
                 if (uniqueNewJobs.length === 0) {
+                    console.log('[Indeed] No valid jobs found, stopping pagination.');
                     break;
                 }
 

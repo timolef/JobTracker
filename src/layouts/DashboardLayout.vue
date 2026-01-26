@@ -32,6 +32,7 @@ const navigation = computed(() => [
   { name: t('nav.search'), href: '/search', icon: Search },
   { name: t('nav.contacts'), href: '/contacts', icon: User },
   { name: t('nav.interviews'), href: '/interviews', icon: Calendar },
+  { name: t('nav.calendar'), href: '/calendar', icon: Calendar },
 ])
 
 const isMobileMenuOpen = ref(false)
@@ -73,7 +74,7 @@ onMounted(() => {
           <Menu class="h-6 w-6" />
         </button>
         <div class="flex items-center gap-2">
-          <h1 class="text-xl font-bold tracking-tight bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">JobTracker</h1>
+          <img src="@/assets/logo.png" alt="JobTracker Logo" class="h-14 w-auto" />
         </div>
       </div>
       <div class="flex items-center gap-3">
@@ -102,7 +103,7 @@ onMounted(() => {
       <div class="flex flex-col h-full">
         <div class="p-6 flex items-center justify-between border-b">
           <div class="flex items-center gap-2">
-            <h1 class="text-xl font-bold tracking-tight bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">JobTracker</h1>
+            <img src="@/assets/logo.png" alt="JobTracker Logo" class="h-16 w-auto" />
           </div>
           <button @click="isMobileMenuOpen = false" class="p-2 -mr-2 rounded-lg hover:bg-accent/50 text-muted-foreground">
             <X class="h-5 w-5" />
@@ -179,7 +180,7 @@ onMounted(() => {
     >
       <div class="p-6">
         <div class="flex items-center gap-2">
-          <h1 class="text-2xl font-bold tracking-tight bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">JobTracker</h1>
+            <img src="@/assets/logo.png" alt="JobTracker Logo" class="h-24 w-auto" />
         </div>
       </div>
       

@@ -51,6 +51,9 @@ async function handleLogin() {
     </Button>
     <Card class="w-full max-w-md shadow-lg border-opacity-50">
       <CardHeader class="space-y-1">
+        <div class="flex justify-center mb-4">
+          <img src="@/assets/logo.png" alt="JobTracker Logo" class="h-20 w-auto" />
+        </div>
         <CardTitle class="text-2xl font-bold tracking-tight text-center">Welcome back</CardTitle>
         <CardDescription class="text-center">
           Enter your email to sign in to your account

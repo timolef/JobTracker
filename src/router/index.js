@@ -57,6 +57,11 @@ const router = createRouter({
                     path: 'profile',
                     name: 'profile',
                     component: () => import('../views/ProfileView.vue')
+                },
+                {
+                    path: 'calendar',
+                    name: 'calendar',
+                    component: () => import('../views/CalendarView.vue')
                 }
             ]
         }
