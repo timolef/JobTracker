@@ -3,6 +3,37 @@ const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 
 puppeteer.use(StealthPlugin());
 
+// Helper: Random delay to mimic human behavior
+function randomDelay(min, max) {
+    const delay = Math.floor(Math.random() * (max - min + 1)) + min;
+    return new Promise(resolve => setTimeout(resolve, delay));
+}
+
+// Helper: Simulate human-like mouse movement and scrolling
+async function simulateHumanBehavior(page) {
+    try {
+        // Random scroll
+        await page.evaluate(() => {
+            window.scrollTo({
+                top: Math.random() * 500,
+                behavior: 'smooth'
+            });
+        });
+        await randomDelay(500, 1500);
+
+        // Scroll back up a bit
+        await page.evaluate(() => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+        await randomDelay(800, 2000);
+    } catch (e) {
+        // Ignore errors in simulation
+    }
+}
+
 async function scrapeJobs(platform, keyword, location, limit = 15) {
     console.log(`[Scraper] Starting ${platform} search for "${keyword}" in "${location}" (Goal: ${limit} jobs)`);
 
@@ -46,7 +77,12 @@ async function scrapeJobs(platform, keyword, location, limit = 15) {
                     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
                 }
 
-                await new Promise(r => setTimeout(r, 4000));
+                // Wait longer with random delay to avoid detection
+                console.log('[Indeed] Waiting for page to settle...');
+                await randomDelay(5000, 8000);
+
+                // Simulate human behavior
+                await simulateHumanBehavior(page);
 
                 // Close popups
                 try {
@@ -73,6 +109,24 @@ async function scrapeJobs(platform, keyword, location, limit = 15) {
 
                 const title = await page.title();
                 console.log(`[Indeed] Page Title: "${title}"`);
+
+                // Check for Cloudflare challenge
+                if (title.includes('Just a moment') || title.includes('Attention Required')) {
+                    console.log('[Indeed] ⏳ Cloudflare challenge detected, waiting longer...');
+                    await randomDelay(10000, 15000);
+
+                    // Check if challenge was solved
+                    const newTitle = await page.title();
+                    console.log(`[Indeed] New page title: "${newTitle}"`);
+
+                    if (newTitle.includes('Just a moment') || newTitle.includes('Attention Required')) {
+                        console.log('[Indeed] 🚫 Still blocked by Cloudflare after waiting.');
+                        const debugPath = require('path').join(__dirname, 'uploads', `cloudflare_block_${Date.now()}.png`);
+                        await page.screenshot({ path: debugPath, fullPage: true });
+                        console.log(`[Indeed] Screenshot saved: ${debugPath}`);
+                        break;
+                    }
+                }
 
                 // Wait for results with multiple fallback selectors
                 const jobCardSelectors = [
@@ -276,7 +330,10 @@ async function scrapeJobs(platform, keyword, location, limit = 15) {
                 if (jobs.length >= limit) break;
 
                 pageNum++;
-                await new Promise(r => setTimeout(r, 2000 + Math.random() * 2000));
+                // Longer random delay between pages to avoid detection
+                const pageDelay = 3000 + Math.random() * 4000;
+                console.log(`[Indeed] Waiting ${Math.round(pageDelay / 1000)}s before next page...`);
+                await randomDelay(3000, 7000);
             }
         } else if (platform === 'Welcome to the Jungle') {
             // WTTJ Pagination logic
