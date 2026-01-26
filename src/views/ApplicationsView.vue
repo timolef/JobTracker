@@ -2,7 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useApplicationStore } from '@/stores/applications'
 import { useDocumentsStore } from '@/stores/documents'
-import { Plus, Search, MapPin, Building2, Calendar, Trash2, FileText, File, Eye } from 'lucide-vue-next'
+import { Plus, Search, MapPin, Building2, Calendar, Trash2, FileText, File, Eye, Link2 } from 'lucide-vue-next'
 import Button from '@/components/ui/Button.vue'
 import Input from '@/components/ui/Input.vue'
 import Label from '@/components/ui/Label.vue'
@@ -11,6 +11,7 @@ import Dialog from '@/components/ui/Dialog.vue'
 import Card from '@/components/ui/Card.vue'
 import CardContent from '@/components/ui/CardContent.vue'
 import ExportButton from '@/components/ExportButton.vue'
+import AddFromLinkModal from '@/components/AddFromLinkModal.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useI18n } from 'vue-i18n'
 
@@ -28,6 +29,7 @@ onMounted(() => {
 const searchQuery = ref('')
 const statusFilter = ref('All')
 const isDialogOpen = ref(false)
+const isLinkModalOpen = ref(false)
 const isEditing = ref(false)
 const currentId = ref(null)
 const sortBy = ref('date-desc')
@@ -143,6 +145,25 @@ function needsFollowUp(app) {
   const daysDiff = (new Date() - date) / (1000 * 60 * 60 * 24)
   return daysDiff > 7 // 7 days threshold
 }
+
+function handleJobExtracted(jobDetails) {
+  // Pre-fill form with extracted data
+  form.value = {
+    company: jobDetails.company,
+    position: jobDetails.title,
+    location: jobDetails.location,
+    type: jobDetails.type || 'Full-time',
+    status: 'To Apply',
+    link: jobDetails.link,
+    notes: jobDetails.description ? `Salary: ${jobDetails.salary || 'Not specified'}\n\n${jobDetails.description}` : '',
+    cv_id: null,
+    cover_letter_id: null,
+    follow_up_date: null
+  }
+  isEditing.value = false
+  currentId.value = null
+  isDialogOpen.value = true
+}
 </script>
 
 <template>
@@ -164,6 +185,9 @@ function needsFollowUp(app) {
             }"
             type="applications"
          />
+         <Button variant="outline" class="rounded-xl" @click="isLinkModalOpen = true">
+            <Link2 class="h-4 w-4 mr-2" /> {{ t('applications.add_from_link') }}
+         </Button>
          <Button class="rounded-xl shadow-lg shadow-primary/20" @click="openAddModal">
             <Plus class="h-4 w-4 mr-2" /> {{ t('applications.add_app') }}
          </Button>
@@ -363,5 +387,12 @@ function needsFollowUp(app) {
           </div>
        </form>
     </Dialog>
+
+    <!-- Add from Link Modal -->
+    <AddFromLinkModal 
+      v-if="isLinkModalOpen"
+      @close="isLinkModalOpen = false"
+      @jobExtracted="handleJobExtracted"
+    />
   </div>
 </template>

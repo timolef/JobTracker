@@ -43,7 +43,8 @@
         "edit": "Edit",
         "add": "Add",
         "loading": "Loading...",
-        "search": "Search..."
+        "search": "Search...",
+        "reset": "Reset"
     },
     "pricing": {
         "title": "Choose your plan",
@@ -58,7 +59,28 @@
         "subtitle": "Manage and track your job applications.",
         "searchPlaceholder": "Search companies or roles...",
         "allStatuses": "All Statuses",
-        "add_app": "Add Application"
+        "add_app": "Add Application",
+        "add_from_link": "Add from Link"
+    },
+    "addFromLink": {
+        "title": "Add Application from Link",
+        "urlLabel": "Job URL",
+        "urlPlaceholder": "https://fr.indeed.com/viewjob?jk=...",
+        "hint": "Paste an Indeed job URL to automatically extract details",
+        "extract": "Extract Details",
+        "extracting": "Extracting...",
+        "error": "Error",
+        "success": "Job details extracted successfully!",
+        "urlRequired": "Please enter a URL",
+        "onlyIndeed": "Only Indeed URLs are supported at the moment",
+        "extractionFailed": "Failed to extract job details. Please check the URL and try again.",
+        "jobTitle": "Job Title",
+        "company": "Company",
+        "location": "Location",
+        "salary": "Salary",
+        "type": "Job Type",
+        "description": "Description",
+        "createApplication": "Create Application"
     },
     "documents": {
         "title": "Documents",

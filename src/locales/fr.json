@@ -43,7 +43,8 @@
         "edit": "Modifier",
         "add": "Ajouter",
         "loading": "Chargement...",
-        "search": "Rechercher..."
+        "search": "Rechercher...",
+        "reset": "Réinitialiser"
     },
     "pricing": {
         "title": "Choisissez votre forfait",
@@ -58,7 +59,28 @@
         "subtitle": "Gérez et suivez vos candidatures.",
         "searchPlaceholder": "Chercher une entreprise ou un poste...",
         "allStatuses": "Tous les statuts",
-        "add_app": "Ajouter une candidature"
+        "add_app": "Ajouter une candidature",
+        "add_from_link": "Ajouter depuis un lien"
+    },
+    "addFromLink": {
+        "title": "Ajouter une candidature depuis un lien",
+        "urlLabel": "URL de l'offre",
+        "urlPlaceholder": "https://fr.indeed.com/viewjob?jk=...",
+        "hint": "Collez un lien Indeed pour extraire automatiquement les détails",
+        "extract": "Extraire les détails",
+        "extracting": "Extraction...",
+        "error": "Erreur",
+        "success": "Détails de l'offre extraits avec succès !",
+        "urlRequired": "Veuillez entrer une URL",
+        "onlyIndeed": "Seuls les liens Indeed sont supportés pour le moment",
+        "extractionFailed": "Échec de l'extraction. Veuillez vérifier l'URL et réessayer.",
+        "jobTitle": "Titre du poste",
+        "company": "Entreprise",
+        "location": "Localisation",
+        "salary": "Salaire",
+        "type": "Type de contrat",
+        "description": "Description",
+        "createApplication": "Créer la candidature"
     },
     "documents": {
         "title": "Documents",

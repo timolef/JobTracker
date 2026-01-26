@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const { scrapeJobs } = require('./scraper');
+const { scrapeJobDetails } = require('./job-scraper');
 const { initDB } = require('./db');
 const authRoutes = require('./auth');
 
@@ -85,6 +86,29 @@ app.post('/api/scrape', async (req, res) => {
     } catch (error) {
         console.error('[API] Scrape Failed:', error);
         res.status(500).json({ error: 'Failed to scrape jobs' });
+    }
+});
+
+// Scrape job details from a specific URL
+app.post('/api/scrape-job', async (req, res) => {
+    const { url } = req.body;
+
+    if (!url) {
+        return res.status(400).json({ error: 'URL is required' });
+    }
+
+    console.log(`[API] Scrape Job Details - URL: ${url}`);
+
+    try {
+        const jobDetails = await scrapeJobDetails(url);
+        console.log(`[API] Job Details Extracted: ${jobDetails.title} at ${jobDetails.company}`);
+        res.json(jobDetails);
+    } catch (error) {
+        console.error('[API] Job Scrape Failed:', error.message);
+        res.status(500).json({
+            error: 'Failed to extract job details',
+            message: error.message
+        });
     }
 });
 
