@@ -39,12 +39,76 @@ async function scrapeJobs(platform, keyword, location, limit = 15) {
 
     const browser = await puppeteer.launch({
         headless: "new",
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
+        args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-blink-features=AutomationControlled',
+            '--disable-dev-shm-usage',
+            '--disable-accelerated-2d-canvas',
+            '--no-first-run',
+            '--no-zygote',
+            '--disable-gpu',
+            '--window-size=1920,1080',
+            '--disable-features=IsolateOrigins,site-per-process',
+            '--disable-web-security'
+        ]
     });
     const page = await browser.newPage();
 
+    // Enhanced anti-detection
+    await page.evaluateOnNewDocument(() => {
+        // Override the navigator.webdriver property
+        Object.defineProperty(navigator, 'webdriver', {
+            get: () => false,
+        });
+
+        // Mock plugins
+        Object.defineProperty(navigator, 'plugins', {
+            get: () => [1, 2, 3, 4, 5],
+        });
+
+        // Mock languages
+        Object.defineProperty(navigator, 'languages', {
+            get: () => ['fr-FR', 'fr', 'en-US', 'en'],
+        });
+
+        // Chrome runtime
+        window.chrome = {
+            runtime: {},
+        };
+
+        // Permissions
+        const originalQuery = window.navigator.permissions.query;
+        window.navigator.permissions.query = (parameters) => (
+            parameters.name === 'notifications' ?
+                Promise.resolve({ state: Notification.permission }) :
+                originalQuery(parameters)
+        );
+    });
+
     await page.setViewport({ width: 1920, height: 1080 });
-    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+
+    // Rotate user agents
+    const userAgents = [
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
+    ];
+    const randomUA = userAgents[Math.floor(Math.random() * userAgents.length)];
+    await page.setUserAgent(randomUA);
+
+    // Set realistic headers
+    await page.setExtraHTTPHeaders({
+        'Accept-Language': 'fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'none',
+        'Sec-Fetch-User': '?1'
+    });
 
     let jobs = [];
     let pageNum = 0;
@@ -293,14 +357,23 @@ async function scrapeJobs(platform, keyword, location, limit = 15) {
                 const uniqueNewJobs = [];
                 const currentLinks = new Set(jobs.map(j => j.link));
 
-                newJobs.forEach(job => {
+                newJobs.forEach((job, idx) => {
                     // Validate job has minimum required fields
                     const isValid = job.title !== 'Unknown' &&
                         job.company !== 'Unknown' &&
                         job.link &&
                         job.link !== '#' &&
-                        !job.link.includes('pagead') && // Filter ads
                         !currentLinks.has(job.link);
+
+                    if (!isValid) {
+                        // Log why this job was filtered
+                        const reasons = [];
+                        if (job.title === 'Unknown') reasons.push('no title');
+                        if (job.company === 'Unknown') reasons.push('no company');
+                        if (!job.link || job.link === '#') reasons.push('no link');
+                        if (currentLinks.has(job.link)) reasons.push('duplicate');
+                        console.log(`[Indeed] Filtered job ${idx + 1}: ${reasons.join(', ')} - ${job.title}`);
+                    }
 
                     if (isValid) {
                         delete job._selectorUsed; // Remove diagnostic data
